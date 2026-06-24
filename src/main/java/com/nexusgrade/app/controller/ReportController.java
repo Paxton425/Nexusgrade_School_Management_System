@@ -1,8 +1,9 @@
 package com.nexusgrade.app.controller;
 
+import com.nexusgrade.app.model.Report;
+import com.nexusgrade.app.model.Term;
 import com.nexusgrade.app.model.Result;
 import com.nexusgrade.app.model.Student;
-import com.nexusgrade.app.model.StudentReport;
 import com.nexusgrade.app.repository.ReportRepository;
 import com.nexusgrade.app.repository.StudentRepository;
 import com.nexusgrade.app.service.ReportService;
@@ -34,16 +35,16 @@ public class ReportController {
     @GetMapping("/student-report/{studentId}")
     public String getStudentReport(@PathVariable UUID studentId, Model model) {
         try{
-            StudentReport report = reportRepository.findStudentReportByStudent_Id(studentId)
+            Report report = reportRepository.findStudentReportByStudent_Id(studentId)
                     .orElseGet(()->{
                         Student student = studentRepository.findById(studentId)
                                 .orElseThrow(()-> new EntityNotFoundException("Student matching id not found"));
                         return reportService.generateNewReportTemplate(student);
                     });
-            Map<Result.Term, Double[]> termOveralls = reportService.getTermOveralls(report);
+            Map<Term, Double[]> termOveralls = reportService.getTermOveralls(report);
             model.addAttribute("report", report);
             model.addAttribute("termOveralls", termOveralls);
-            model.addAttribute("termPeriods", Result.Term.values());
+            model.addAttribute("termPeriods", Term.values());
         }
         catch(Exception e){
             e.printStackTrace();

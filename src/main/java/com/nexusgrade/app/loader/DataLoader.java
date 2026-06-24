@@ -1,9 +1,12 @@
 package com.nexusgrade.app.loader;
 
 import com.nexusgrade.app.model.*;
+import com.nexusgrade.app.model.TimeTablePeriod.PeriodColor;
+import com.nexusgrade.app.model.TimeTablePeriod.SessionType;
 import com.nexusgrade.app.repository.*;
-import com.nexusgrade.app.model.*;
+import com.nexusgrade.app.model.TimeTablePeriod.PeriodColor;
 import com.nexusgrade.app.repository.*;
+import jakarta.persistence.EntityNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,10 +14,12 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.time.Month;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+import java.util.function.Function;
+
+import static java.util.Locale.filter;
 
 @Component
 public class DataLoader implements CommandLineRunner {
@@ -26,10 +31,14 @@ public class DataLoader implements CommandLineRunner {
     @Autowired private ResultRepository achievementRepo;
     @Autowired private ClassRepository classRepository;
     @Autowired private PasswordEncoder passwordEncoder;
+    @Autowired private ActivityLogRepository activityLogRepository;
+    @Autowired private AcademicCalendarRepository academicCalendarRepository;
+    @Autowired private TimeTableRepository timeTableRepository;
+    @Autowired private PeriodsRepository periodsRepository;
+
+    Logger logger = LoggerFactory.getLogger(DataLoader.class);
 
     public void insertSampleData() {
-
-        Logger logger = LoggerFactory.getLogger(DataLoader.class);
 
         try{
             logger.info("============= CLEARING ALL USERS FROM DATABASE ============");
@@ -76,8 +85,100 @@ public class DataLoader implements CommandLineRunner {
         }
     }
 
+    private void setActivityPerformers(){
+        logger.info("============= POPULATING ACTIVITIES WITH PERFORMERS ============");
+        try {
+            User performer = userRepository.findByUsername("ptmwelase@email.com").orElseThrow(EntityNotFoundException::new);
+            List<ActivityLog> activityLogs = activityLogRepository.findAll();
+            for(ActivityLog log : activityLogs){
+                log.setPerformedBy(performer);
+            }
+            activityLogRepository.saveAll(activityLogs);
+        } catch (Exception e) {
+            logger.error("======== DB SEEDING FAILED! =======\n{}", e.getMessage());
+        }
+        logger.info("============= ACTIVITIES SEEDING COMPLETE ============");
+    }
+
+    void loadAcademicCalender(){
+        logger.info("============= SORTING TERMS ============");
+        try{
+            List<Result> results = achievementRepo.findAll();
+            List<AcademicCalendar> calendars = academicCalendarRepository.findAll();
+            for(AcademicCalendar calendar : calendars)
+                for(Result result : results)
+                    if(result.getAcademicCalendar().getCurrentTerm().equals(calendar.getCurrentTerm()))
+                        result.setAcademicCalendar(calendar);
+
+            achievementRepo.saveAll(results);
+        } catch (Exception e) {
+            logger.error("======== DB SEEDING FAILED! =======\n{}", e.getMessage());
+        }
+        logger.info("============= SORTING COMPLETE ============");
+    }
+
+    private void seedTimetable(){
+        logger.info("============= SEEDING TIME TABLE SUBJECTS ============");
+        try{
+            // Create TimeTable data to save in database
+            List<TimeTablePeriod> periods = periodsRepository.findAll();
+            List<Subject> subjects = subjectRepo.getSubjectsByGrade(10);
+            Function<Long, Subject> subjectMatchSupplier = (subjectId) -> subjects.stream()
+                    .filter(s -> Objects.equals(s.getId(), subjectId))
+                    .findFirst().orElse(null);
+
+            for(TimeTablePeriod p : periods){
+                switch (p.getColor()){
+                    case BLUE:
+                        p.setSubject(subjectMatchSupplier.apply(37L));
+                        break;
+                    case TEAL:
+                        p.setSubject(subjectMatchSupplier.apply(1L));
+                        break;
+                    case PURPLE:
+                        p.setSubject(subjectMatchSupplier.apply(2L));
+                        break;
+                    case PINK:
+                        p.setSubject(subjectMatchSupplier.apply(10L));
+                        break;
+                    case RED:
+                        p.setSubject(subjectMatchSupplier.apply(36L));
+                        break;
+                }
+            }
+
+            periodsRepository.saveAll(periods);
+        }catch (Exception e) {
+            logger.error("\n======== TIME TABLE SUBJECTS SEEDING FAILED! =======\n{}", e.getMessage());
+        }
+        logger.info("============= TIME TABLE SUBJECTS INJECTION COMPLETE ============");
+    }
+
+    private void injectUserTitles(){
+        logger.error("================== INITIALIZING USER TITLE INJECTION ======================");
+        try {
+            List<User> users = userRepository.findAll();
+            for(User user : users){
+                if(user.getEmployeeId().equals("EMP-001"))
+                    user.setTitle(User.Title.MRS);
+                else if(user.getEmployeeId().equals("EMP-002"))
+                    user.setTitle(User.Title.MR);
+                else
+                    throw new EntityNotFoundException("User did not match either EMPLOYEE-ID");
+            }
+
+            userRepository.saveAll(users);
+        } catch (Exception e) {
+            logger.error("================== TITLE INJECTION FAILED ======================");
+        }
+        logger.error("================== TITLE INJECTION COMPLETE ======================");
+    }
+
     @Override
     public void run(String... args) throws Exception {
         //insertSampleData();
+        //setActivityPerformers();
+        //seedTimetable();
+        //injectUserTitles();
     }
 }

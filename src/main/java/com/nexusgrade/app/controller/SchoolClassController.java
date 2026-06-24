@@ -1,14 +1,18 @@
 package com.nexusgrade.app.controller;
 
 import com.nexusgrade.app.annotation.LogActivity;
+import com.nexusgrade.app.model.AcademicCalendar;
 import com.nexusgrade.app.model.SchoolClass;
 import com.nexusgrade.app.model.Subject;
-import com.nexusgrade.app.repository.ClassRepository;
-import com.nexusgrade.app.repository.ResultRepository;
-import com.nexusgrade.app.repository.SubjectRepository;
+import com.nexusgrade.app.model.TimeTable;
+import com.nexusgrade.app.repository.*;
+import com.nexusgrade.app.service.AttendanceService;
+import com.nexusgrade.app.service.TimeTableService;
 import jakarta.persistence.EntityNotFoundException;
+import com.nexusgrade.app.service.TimeTableService.TimeSlot;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -19,26 +23,37 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Controller
 @RequestMapping(path = "/classes")
 public class SchoolClassController {
 
+    @Autowired
+    AttendanceService attendanceService;
+    @Autowired
+    TimeTableService timeTableService;
     private ClassRepository classRepository;
     private SubjectRepository subjectRepository;
+    private TimeTableRepository timeTableRepository;
     private ResultRepository resultRepository;
+    private AcademicCalendarRepository calendarRepository;
+    private StatsRepository statsRepository;
 
     Logger logger = LoggerFactory.getLogger(StudentController.class);
 
     SchoolClassController(ResultRepository resultRepository,
                           SubjectRepository subjectRepository,
-                          ClassRepository classRepository){
+                          ClassRepository classRepository,
+                          AcademicCalendarRepository calendarRepository,
+                          StatsRepository statsRepository,
+                          TimeTableRepository timeTableRepository){
         this.classRepository = classRepository;
         this.resultRepository = resultRepository;
         this.subjectRepository = subjectRepository;
+        this.calendarRepository = calendarRepository;
+        this.statsRepository = statsRepository;
+        this.timeTableRepository = timeTableRepository;
     }
 
     @GetMapping("")
@@ -53,6 +68,16 @@ public class SchoolClassController {
         SchoolClass schoolClass = classRepository.findById(id)
                 .orElseThrow(()-> new EntityNotFoundException("Class Not found"));
         model.addAttribute("schoolClass", schoolClass);
+
+        // Attendance metrics
+        model.addAttribute("todayAttendanceRate", attendanceService.getTodayClassAttendanceRate(id));
+        model.addAttribute("weeklyAttendanceAvg", attendanceService.getWeeklyAverage(id));
+        model.addAttribute("monthlyAttendanceAvg", attendanceService.getMonthlyAverage(id));
+        model.addAttribute("absentToday", attendanceService.getAbsentCountToday(id));
+        model.addAttribute("overallPerformance", attendanceService.getOverallPerformance(id));
+
+        // Recent attendance records
+        model.addAttribute("recentAttendance", attendanceService.getRecentAttendances(id, 10));
 
         return "classes/class-view";
     }
@@ -129,7 +154,43 @@ public class SchoolClassController {
         response.put("recordsTotal", classRepository.count());
         response.put("recordsFiltered", page.getTotalElements());
         response.put("data", data);
-
+        
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("class/timetable/{classId}")
+    public String viewClassTimetable(@PathVariable Long classId, Model model) {
+
+        SchoolClass schoolClass = classRepository.findById(classId)
+                .orElseThrow(()-> new EntityNotFoundException("Class not found for ID: "+classId));
+        TimeTable timeTable = schoolClass.getClassTimeTable();
+
+        // Class Info
+        String classTeacherName = schoolClass.getClassTeacher().getUser().getTitle().getLabel()+" "+schoolClass.getClassTeacher().getUser().getLastName();
+        AcademicCalendar calendar = calendarRepository.getAcademicCalendarByAcademicYear(schoolClass.getClassYear());
+        model.addAttribute("className", "Grade "+schoolClass.getGrade()+"-"+schoolClass.getTitle());
+        model.addAttribute("academicYear", schoolClass.getClassYear());
+        model.addAttribute("Current Term", calendar.getCurrentTerm());
+        model.addAttribute("classTeacher", classTeacherName);
+        model.addAttribute("totalStudents", classRepository.getClassStudentCount(classId));
+        model.addAttribute("roomNumber", "Class Room "+schoolClass.getTitle()+"-"+schoolClass.getGrade());
+
+        // Build Timetable Data
+        Map<String, List<TimeSlot>> timetable = timeTableService.buildTimeTable(timeTable);
+        model.addAttribute("timetable", timetable);
+
+        // Days of the week for header
+        List<String> days = timeTableService.getDays();
+        model.addAttribute("days", days);
+
+        List<String> timeSlots = timeTableService.getTimeSlots();
+        model.addAttribute("timeSlots", timeSlots);
+
+        // Statistics
+        Map<String, Integer> stats = timeTableService.getStats(timeTable.getId());
+        model.addAttribute("totalPeriods", stats.get("totalPeriods"));
+        model.addAttribute("subjectsCount", stats.get("subjectsCount"));
+
+        return "classes/timetable";
     }
 }

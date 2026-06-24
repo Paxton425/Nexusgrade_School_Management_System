@@ -3,6 +3,7 @@ package com.nexusgrade.app.model;
 import jakarta.annotation.Nullable;
 import jakarta.persistence.*;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
@@ -19,6 +20,9 @@ public class User {
     private String middleName;
     private String lastName;
     private String username;
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    private Title title;
     private String profileImage;
     private String email;
     private String phone;
@@ -28,12 +32,32 @@ public class User {
     private String password;
     @Enumerated(EnumType.STRING)
     private Role role;
-    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     @Nullable
     private Instructor instructor;
+    @OneToMany(mappedBy = "performedBy")
+    List<ActivityLog> activityLog;
 
     public enum Gender { MALE, FEMALE }
-    public enum Role { INSTRUCTOR, CLERK, ADMIN, DEVELOPER }
+    public enum Role { INSTRUCTOR, CLERK, INSTRUCTOR_AND_ADMIN, ADMIN, DEVELOPER }
+    public enum Title {
+        MR("Mr."),
+        MS("Ms."),
+        MRS("Mrs."),
+        DR("Dr."),
+        COACH("Coach"),
+        MX("Mx.");
+
+        private final String label;
+
+        Title(String label) {
+            this.label = label;
+        }
+
+        public String getLabel() {
+            return this.label;
+        }
+    }
 
     // --- Getters & Setters ---
     public UUID getId() { return id; }
@@ -57,6 +81,14 @@ public class User {
 
     public String getUsername() { return username; }
     public void setUsername(String username) { this.username = username; }
+
+    public Title getTitle() {
+        return title;
+    }
+
+    public void setTitle(Title title) {
+        this.title = title;
+    }
 
     public String getProfileImage() {
         return profileImage;
@@ -83,4 +115,12 @@ public class User {
 
     public Role getRole() { return role; }
     public void setRole(Role role) { this.role = role; }
+
+    public List<ActivityLog> getActivityLog() {
+        return activityLog;
+    }
+
+    public void setActivityLog(List<ActivityLog> activityLog) {
+        this.activityLog = activityLog;
+    }
 }

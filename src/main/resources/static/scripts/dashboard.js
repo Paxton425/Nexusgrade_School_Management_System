@@ -15,27 +15,48 @@ Chart.defaults.font.family = "'Segoe UI', sans-serif";
 function buildPerfomanceRadar(data){
     const performanceData = data['subjectPerformances'];
 
+    console.log("performance data", performanceData);
+
     //Default fall back values
     const labels = ['Math', 'Physics', 'Chemistry', 'Biology', 'English'];
-    const dataSet1 = [0, 0, 0, 0, 0];
-    const dataSet2 = [0, 0, 0, 0, 0];
+    const dataSet1 = [0, 0, 0, 0, 0]; //Previous
+    const dataSet2 = [0, 0, 0, 0, 0]; //Current
 
-    if(performanceData.length > 0) {
-        dataSet1.length =0;
-        dataSet2.length =0;
-        for (entry of performanceData) {
-            labels.push(entry[0]);
-            dataSet1.push(entry[2]); //Term 2
-            dataSet2.push(entry[1]); //Term 1
-        }
+    const terms = Object.keys(performanceData);
+    const termA = performanceData[terms[0]]; //Previous
+    const termB = performanceData[terms[1]]; //Current
+
+    // Get subject codes from both terms
+    const subjectsA = Object.keys(termA);
+    const subjectsB = Object.keys(termB);
+
+    // Compare subjects
+    const hasSameSubjects = subjectsA.length === subjectsB.length && subjectsA.every(subject => subjectsB.includes(subject));
+
+    if (hasSameSubjects) {
+        dataSet1.length = 0;
+        dataSet2.length = 0;
+        labels.length = 0;
+
+        const subjectKeys = Object.keys(termA); //Since objects match, we use same keys
+
+        subjectKeys.forEach(key => {
+            const subjectData = termA[key];
+            labels.push(key);
+            dataSet1.push(subjectData.performance);
+            dataSet2.push(termB[key]?.performance ?? 0);
+        });
+    } else {
+        console.error("invalid or term objects missmatch!");
+        throw new Error("invalid or term objects missmatch!");
     }
 
-    const demoData = {
+    const chartData = {
         labels: labels,
         datasets: [
             {
-                label: 'Current Term',
-                data: dataSet1,
+                label: 'Current Term ('+Object.keys(performanceData)[1].replace("_", " ")+')',
+                data: dataSet2,
                 fill: true,
                 backgroundColor: 'rgba(59, 130, 246, 0.2)',
                 borderColor: '#3b82f6',
@@ -46,8 +67,8 @@ function buildPerfomanceRadar(data){
                 pointHoverBorderColor: '#3b82f6'
             },
             {
-                label: 'Previous Term',
-                data: dataSet2,
+                label: 'Previous Term ('+Object.keys(performanceData)[0].replace("_", " ")+')',
+                data: dataSet1,
                 fill: true,
                 backgroundColor: 'rgba(234, 179, 8, 0.2)',
                 borderColor: '#eab308',
@@ -58,7 +79,7 @@ function buildPerfomanceRadar(data){
     };
     new Chart(document.getElementById("performanceRadar"), {
         type: 'radar',
-        data: demoData,
+        data: chartData,
         options: {
             responsive: true,
             maintainAspectRatio: false,   // Added - recommended for better sizing
@@ -160,7 +181,7 @@ function buildGradesDistChart(data) {
                     gradeDistribution['bad'],
                     gradeDistribution['poor']
                 ],
-                backgroundColor: ['#14b414', '#117ec1', '#8ad4ff', '#ffae00', '#d64427'],
+                backgroundColor: ['#168f16', '#117ec1', '#8ad4ff', '#ffae00', '#d64427'],
                 borderWidth: 0
             }]
         },
@@ -171,7 +192,7 @@ function buildGradesDistChart(data) {
                     enabled: true,
                     callbacks: {
                         label: (context) => {
-                            return ` ${context.dataset.label}: ${context.raw}%`;
+                            return ` ${context.raw}%`;
                         }
                     }
                 }
@@ -180,25 +201,34 @@ function buildGradesDistChart(data) {
     });
 }
 
-function buildPerfomanceChart(data) {
-    const dataEntries = data['averagesPerGrade'].sort((a, b) => a[0] - b[0]);
-    const labels = [];
-    const values = [];
+function buildGradePerfomanceChart(data) {
+    const dataEntries = data['termAveragesPerGrade'];
+    const keys = Object.keys(dataEntries);
+    const dataObj = {
+        labels : dataEntries[keys[0]],
+        previousTerm: dataEntries[keys[1]],
+        currentTerm: dataEntries[keys[2]]
+    }
+    console.log("dataObj", dataObj)
 
-    if (dataEntries.length >= 1) {
-        for (const entry of dataEntries) {
-            labels.push(entry[0]);
-            values.push(entry[1]);
-        }
+    if (dataObj.labels.length >= 1 && dataObj.previousTerm.length >=1) {
+        if(dataObj.labels.length !== dataObj.previousTerm.length)
+            throw Error("Labels and values have unequal entries")
 
         new Chart(document.getElementById('barChart'), {
             type: 'bar',
             data: {
-                labels: labels,
+                labels: dataObj.labels,
                 datasets: [{
-                    label: 'Class Average',
-                    data: values,
+                    label: 'Previous Term',
+                    data: dataObj.previousTerm,
                     backgroundColor: '#3b82f6',
+                    borderRadius: 4,
+                },
+                {
+                    label: 'Current Term',
+                    data: dataObj.currentTerm,
+                    backgroundColor: '#0f3c63',
                     borderRadius: 4,
                 }]
             },
@@ -206,9 +236,10 @@ function buildPerfomanceChart(data) {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    legend: { display: false },
+                    legend: { display: true },
                     tooltip: {
                         callbacks: {
+                            title: (context) => `Grade ${context[0].label}`,
                             label: (context) => `Average: ${context.parsed.y}%`
                         }
                     }
@@ -256,10 +287,17 @@ function insertActivities(data) {
     const activityListEl = document.querySelector('#activity_list');
 
     activity_data.forEach((activity) => {
+        //console.log("Performed By ", activity['performedBy']);
+        let performer = "";
+        if(activity['performedBy'].firstName != null) performer += (activity['performedBy'].firstName).charAt(0);
+        if(activity['performedBy'].middleName != null) performer += (activity['performedBy'].middleName).charAt(0);
+        if(activity['performedBy'].lastName != null) performer = (performer).toUpperCase() +" "+ (activity['performedBy'].lastName);
+
         let icon = {
             class: "bi bi-clipboard-check",
             style: "color: #10b981;",
         };
+
         if(activity['action'].includes("updated a student") || activity['action'].includes("updated an instructor")){
             icon.class = "bi bi-person-check";
         } else if(activity['action'].includes("updated an assessment")){
@@ -282,7 +320,7 @@ function insertActivities(data) {
                 </div>
                 <div>
                     <p><strong>${activity['entityType']}</strong></p>
-                    <small>${activity['performedBy']} ${activity['action']}</small>
+                    <small>${performer} ${activity['action']}</small>
                 </div>
             </li>
         `;
@@ -328,9 +366,11 @@ function insertTopFive(data) {
 // ==================== KPI ANIMATION ====================
 
 function animateKPIs(stats) {
-    animateValue(document.getElementById('studentsCount'), 0, stats.studentsCount, 1000);
-    animateValue(document.getElementById('averageGrade'), 0, stats.averageGrade, 1200, '%');
-    animateValue(document.getElementById('passRate'), 0, stats.passRate, 1200, '%');
+    const currTermStats = stats['currTermStats'];
+    const prevTermStats = stats['prevTermSats'];
+    animateValue(document.getElementById('studentsCount'), 0, currTermStats['studentCount'], 1000);
+    animateValue(document.getElementById('averageGrade'), 0, currTermStats['overallAverage'], 1200, '%');
+    animateValue(document.getElementById('passRate'), 0, currTermStats['passRate'], 1200, '%');
 }
 
 function animateValue(el, start, end, duration, suffix = '') {
@@ -368,7 +408,7 @@ fetch(`${baseUrl}/dashboard/data`)
             buildPerfomanceRadar (dashboardData);
             buildTrendChart(dashboardData);
             buildGradesDistChart(dashboardData);
-            buildPerfomanceChart(dashboardData);
+            buildGradePerfomanceChart(dashboardData);
             insertActivities(dashboardData);
             insertTopFive(dashboardData);
         }

@@ -15,8 +15,10 @@ public class SchoolClass {
     private Integer grade;
     @Column(nullable = false)
     private Integer classYear;
-    @ManyToMany(mappedBy = "schoolClasses")
-    @JsonIgnoreProperties("schoolClasses")
+    @ManyToOne
+    private Instructor classTeacher;
+    @ManyToMany(mappedBy = "assignedClasses")
+    @JsonIgnoreProperties("assignedClasses")
     private List<Instructor> instructors;
     @OneToMany(mappedBy = "schoolClass")
     @JsonIgnoreProperties("schoolClass")
@@ -28,8 +30,12 @@ public class SchoolClass {
             inverseJoinColumns = @JoinColumn(name = "subject_id")
     )
     private List<Subject> subjects;
+    @ManyToOne
+    TimeTable classTimeTable;
     @ManyToMany(mappedBy = "schoolClasses")
     private List<Assessment> assessments;
+    @OneToMany(mappedBy = "schoolClass")
+    private List<ClassSession> classSessions;
 
 
     public Long getId() {
@@ -64,6 +70,14 @@ public class SchoolClass {
         this.classYear = classYear;
     }
 
+    public Instructor getClassTeacher() {
+        return classTeacher;
+    }
+
+    public void setClassTeacher(Instructor classTeacher) {
+        this.classTeacher = classTeacher;
+    }
+
     public List<Instructor> getInstructors() {
         return instructors;
     }
@@ -84,7 +98,31 @@ public class SchoolClass {
         return subjects;
     }
 
+    public TimeTable getClassTimeTable() {
+        return classTimeTable;
+    }
+
+    public void setClassTimeTable(TimeTable classTimeTable) {
+        this.classTimeTable = classTimeTable;
+    }
+
     public void setSubjects(List<Subject> subjects) {
         this.subjects = subjects;
+    }
+
+    public List<Assessment> getAssessments() {
+        return assessments;
+    }
+
+    public void setAssessments(List<Assessment> assessments) {
+        this.assessments = assessments;
+    }
+
+    public List<ClassSession> getClassSessions() {
+        return classSessions;
+    }
+
+    public void setClassSessions(List<ClassSession> classSessions) {
+        this.classSessions = classSessions;
     }
 }

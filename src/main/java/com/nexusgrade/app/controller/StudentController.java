@@ -7,7 +7,7 @@ import com.nexusgrade.app.dto.StudentGradeSummaryDTO;
 import com.nexusgrade.app.dto.StudentReportDTO;
 import com.nexusgrade.app.model.SchoolClass;
 import com.nexusgrade.app.model.Student;
-import com.nexusgrade.app.model.StudentReport;
+import com.nexusgrade.app.model.Report;
 import com.nexusgrade.app.model.Subject;
 import com.nexusgrade.app.repository.ClassRepository;
 import com.nexusgrade.app.repository.ReportRepository;
@@ -131,11 +131,20 @@ public class StudentController implements CommandLineRunner {
     }
 
     @GetMapping("/grades")
-    public String getGradesSummary(Model model){
-        List<StudentGradeSummaryDTO> studentsSummaries = studentRepository.findAll().stream()
-                .map(s -> new StudentGradeSummaryDTO(s))
-                .toList();
+    public String getGradesSummary(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int size,
+            Model model) {
+
+        Pageable pageable = PageRequest.of(page, size);
+        Page<StudentGradeSummaryDTO> studentsSummaries = studentRepository.findAll(pageable)
+                .map(s -> new StudentGradeSummaryDTO(reportService.refreshStudentReport(s).getStudent()));
+
         model.addAttribute("studentsSummaries", studentsSummaries);
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", studentsSummaries.getTotalPages());
+        model.addAttribute("pageSize", size);
+
         return "students/grades-summaries";
     }
 

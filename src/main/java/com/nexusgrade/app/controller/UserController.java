@@ -33,7 +33,7 @@ public class UserController {
         // If the user is an instructor, their linked entity is already available via user.getInstructor()
         if (user.getRole() == User.Role.INSTRUCTOR && user.getInstructor() != null) {
             model.addAttribute("instructorDetails", user.getInstructor());
-            model.addAttribute("assignedClasses", user.getInstructor().getSchoolClasses());
+            model.addAttribute("assignedClasses", user.getInstructor().getAssignedClasses());
         }
 
         return "users/profile-view";

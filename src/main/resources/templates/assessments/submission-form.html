@@ -69,9 +69,9 @@
                         </div>
                         <div class="col-md-6">
                             <label class="form-label fw-bold">3. Term</label>
-                            <select th:field="*{term}" class="form-select form-select-lg">
-                                <option th:each="t : ${terms}"
-                                        th:value="${t}" th:text="${t}">TERM_1</option>
+                            <select th:field="*{academicCalendar}" class="form-select form-select-lg">
+                                <option th:each="c : ${calenders}"
+                                        th:value="${c.getId()}" th:text="${c.getCurrentTerm()}">TERM_1</option>
                             </select>
                         </div>
                     </div>

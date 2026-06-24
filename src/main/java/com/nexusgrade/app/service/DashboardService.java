@@ -1,14 +1,13 @@
 package com.nexusgrade.app.service;
 
+import com.nexusgrade.app.dto.ActivityLogDTO;
 import com.nexusgrade.app.dto.ResultDTO;
 import com.nexusgrade.app.event.EntityUpdatedEvent;
 import com.nexusgrade.app.model.*;
-import com.nexusgrade.app.model.Result.Term;
 import com.nexusgrade.app.repository.*;
-import com.nexusgrade.app.repository.AssessmentRepository;
-import com.nexusgrade.app.repository.InstructorRepository;
-import com.nexusgrade.app.repository.ResultRepository;
-import com.nexusgrade.app.repository.StudentRepository;
+import jakarta.persistence.EntityNotFoundException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.context.event.EventListener;
@@ -17,12 +16,18 @@ import org.springframework.stereotype.Service;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Service
 public class DashboardService {
     @Autowired
     GradingService gradingService;
+    @Autowired
+    StatisticsService statisticsService;
 
     StudentRepository studentRepository;
     InstructorRepository instructorRepository;
@@ -30,23 +35,34 @@ public class DashboardService {
     ResultRepository resultRepository;
     ActivityLogRepository activityLogRepository;
     SubjectRepository subjectRepository;
+    StatsRepository statsRepository;
+    AcademicCalendarRepository calendarRepository;
+
+    // Standard single-threaded scheduler for managing the in-memory debounce delays
+    private final ScheduledExecutorService debounceScheduler = Executors.newSingleThreadScheduledExecutor();
+    private ScheduledFuture<?> pendingRefreshTask;
 
     DashboardService(StudentRepository studentRepository,
                      InstructorRepository instructorRepository,
                      AssessmentRepository assessmentRepository,
                      ResultRepository resultRepository,
                      ActivityLogRepository activityLogRepository,
-                     SubjectRepository subjectRepository){
+                     SubjectRepository subjectRepository,
+                     StatsRepository statsRepository,
+                     AcademicCalendarRepository calendarRepository){
         this.studentRepository = studentRepository;
         this.instructorRepository = instructorRepository;
         this.assessmentRepository = assessmentRepository;
         this.resultRepository = resultRepository;
         this.activityLogRepository = activityLogRepository;
         this.subjectRepository = subjectRepository;
+        this.statsRepository = statsRepository;
+        this.calendarRepository = calendarRepository;
     }
 
-    // This acts as our instant-access thread-safe memory bucket
+    // This acts as instant-access thread-safe memory bucket
     private Map<String, Object> cachedDashboardData = new ConcurrentHashMap<>();
+    Logger logger = LoggerFactory.getLogger(DashboardService.class);
 
     // Returns the data INSTANTLY without touching the database
     public Map<String, Object> getDashboardDataFromCache() {
@@ -56,86 +72,196 @@ public class DashboardService {
         return cachedDashboardData;
     }
 
-    @Async // ⚡ Runs on a background thread automatically!
+    @Async // ⚡ Runs on a background thread automatically on Log entity changes!
     @EventListener
-    public void handleEntityChangeEvent(EntityUpdatedEvent event) {
-        System.out.println("🔄 Entity change detected for: " + event.getEntityName() + ". Refreshing dashboard cache...");
-        generateAndCacheDashboard();
+    public synchronized void handleEntityChangeEvent(EntityUpdatedEvent event) {
+        logger.info("🔄 Entity change detected for: {}. Scheduling debounced refresh...", event.getEntityName());
+
+        // 1. Cancel the previously scheduled refresh task if it hasn't run yet
+        if (pendingRefreshTask != null && !pendingRefreshTask.isDone()) {
+            pendingRefreshTask.cancel(false);
+        }
+
+        // 2. Schedule a new task to execute exactly 5 seconds from now
+        pendingRefreshTask = debounceScheduler.schedule(() -> {
+            logger.info("🚀 5-second silence window reached. Executing heavy dashboard cache refresh now...");
+            generateAndCacheDashboard();
+        }, 5, TimeUnit.SECONDS);
     }
 
     // Every 15 minutes, the background thread wakes up
     @Scheduled(fixedRate = 900000)
     public synchronized void generateAndCacheDashboard() {
-        Map<String, Object> freshData = new HashMap<>();
-
-        // 1. Basic Stats via database level math
-        long totalStudents = studentRepository.count();
-        long totalSubmissions = resultRepository.countSubmissions();
-        Double avg = resultRepository.getAverageScore();
-        double averageGrade = (avg != null) ? avg : 0.0;
-
-        freshData.put("stats", Map.of(
-                "studentsCount", totalStudents,
-                "submissions", totalSubmissions,
-                "averageGrade", averageGrade,
-                "passRate", 85.5 // Optimize pass-rate tracking via a quick targeted repository count
-        ));
-
-        List<Object[]> subjectPerformances = getSubjectPerformances(10);
-        freshData.put("subjectPerformances", subjectPerformances);
-
-        List<Object[]> averagesPerGrade = resultRepository.getAverageScorePerGrade();
-        freshData.put("averagesPerGrade", averagesPerGrade);
-
-        Map<String, Double> performanceDistribution = getPerformanceDistribution(totalSubmissions);
-        freshData.put("performanceDistribution", performanceDistribution);
-
-        // High-speed Top 5 directly leveraging SQL LIMIT
-        List<ResultDTO> topFive = resultRepository.findTop5ByOrderByScoreDesc()
-                .stream().map(ResultDTO::new).collect(Collectors.toList());
-        freshData.put("topFiveStudents", topFive);
-
-        // Recent activities
-        freshData.put("activityLogs",getRecentActivities());
-
-        // Swap the cache reference instantly with zero downtime
-        this.cachedDashboardData = freshData;
-    }
-
-    public List<ActivityLog> getRecentActivities(){
-        return activityLogRepository.findFirst5ByOrderByIdDesc();
-    }
-
-    public Map<String, Double> getPerformanceDistribution(long totalSubmisions){
         try{
-            long poorCount = resultRepository.countAllByOrLessThan(40.00);
-            long badCount = resultRepository.countAllByOrLessThan(50.00)-poorCount;
-            long averageCount = resultRepository.countAllByOrLessThan(60.00)-(badCount+poorCount);
-            long goodCount = resultRepository.countAllByOrLessThan(70.00)-(badCount+poorCount+averageCount);
-            long excellentCount = resultRepository.countAllByOrLessThan(100.00)-(badCount+poorCount+averageCount+goodCount);
+            Map<String, Object> freshData = new HashMap<>();
+            Term currentTerm = calendarRepository.findCurrentTermsCalender()
+                    .orElseThrow(()-> new EntityNotFoundException("Academic calender entity not found for current term."))
+                    .getCurrentTerm();
+
+            Map<String, Stats> stats = getStats(currentTerm);
+            freshData.put("stats", stats);
+
+            Map<String, Map<String, Map<String, Object>>> subjectPerformances = getSubjectPerformances(10);
+            freshData.put("subjectPerformances", subjectPerformances);
+
+            Map<Integer, Double> averagesPerGrade = getAveragesPerGrade();
+            freshData.put("averagesPerGrade", averagesPerGrade);
+
+            Map<String, Number[]> termAveragesPerGrade = getTermAveragesPerGrade();
+            freshData.put("termAveragesPerGrade", termAveragesPerGrade);
+
+            Map<String, Double> performanceDistribution = getPerformanceDistribution();
+            freshData.put("performanceDistribution", performanceDistribution);
+
+            // High-speed Top 5 directly leveraging SQL LIMIT
+            List<ResultDTO> topFive = resultRepository.findTop5ByOrderByScoreDesc()
+                    .stream().map(ResultDTO::new).collect(Collectors.toList());
+            freshData.put("topFiveStudents", topFive);
+
+            // Recent activities
+            freshData.put("activityLogs", getRecentActivities());
+
+            // Swap the cache reference instantly with zero downtime
+            this.cachedDashboardData = freshData;
+        } catch(Exception e){
+            logger.error("Dashboard Cache Generation Failure!");
+            e.printStackTrace();
+        }
+    }
+
+    private Map<String, Stats> getStats(Term term){
+        // 1. Basic Stats via database level math
+        Stats currentTermStats =  statsRepository.findFirstByAcademicCalendarTermOrderByCreatedAtDesc(term)
+                .orElseGet(()-> statisticsService.generateNewLatestStats());
+        Stats prevTermStats = statsRepository.findFirstBefore(currentTermStats.getId()-1) //Get preceding stats entry
+                .orElseGet(Stats::new);
+
+        return Map.of(
+                "prevTermSats", prevTermStats,
+                "currTermStats", currentTermStats
+        );
+    }
+
+    public Map<Integer, Double> getAveragesPerGrade() {
+        List<Object[]> dataRows = resultRepository.getAverageMarkPerGrade();
+        Map<Integer, Double> results = new TreeMap<>();
+
+        for (Object[] row : dataRows) {
+            if (row != null && row.length >= 2) {
+                Integer grade = (Integer) row[0];
+
+                // Safe conversion handling both Double and BigDecimal database outputs
+                Double average = row[3] instanceof Number ? ((Number) row[3]).doubleValue() : 0.0;
+                results.put(grade, average);
+            }
+        }
+        return results;
+    }
+
+    public Map<String, Number[]> getTermAveragesPerGrade() {
+        try{
+            List<Object[]> dataRows = resultRepository.getTermAveragesPerGrade(Term.TERM_2.toString(), Term.TERM_1.toString());
+            Map<String, Number[]> results = new TreeMap<>(); // TreeMap automatic sorting
+            Integer[] grades = new Integer[dataRows.size()/2];
+            results.put("Grades", grades);
+            int gradesIndex = 0;
+
+            for (Object[] row : dataRows) {
+                Integer grade = (Integer) row[0];
+                grades[gradesIndex] = (grades[gradesIndex] == null)? grade : grades[gradesIndex++];
+                if (row != null && row.length >= 3) {
+                    String term = Arrays.stream(Term.values())
+                            .filter(t -> t.toString().equals(row[1].toString()))
+                            .findFirst()
+                            .orElseThrow(() -> new RuntimeException("No matching term found for: " + row[1].toString()))
+                            .toString();
+                    Number average = row[2] instanceof Number ? ((Number) row[2]) : 0.0;
+
+                    if(!results.isEmpty() && results.containsKey(term)){
+                        Number[] averages = results.get(term);
+                        for(int i=0; i<averages.length; i++)
+                            if(averages[i] == null){
+                                averages[i] = average;
+                                break;
+                            }
+                        results.put(term, averages);
+                    }
+                    else {
+                        Number[] newAverages = new Number[dataRows.size()/2];
+                        newAverages[0] = average;
+                        results.put(term, newAverages);
+                    }
+                }
+            }
+            return results;
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException(e);
+        }
+    }
+
+
+    public Map<String, Double> getPerformanceDistribution(){
+        try{
+
+            Map<String, Object> performanceDist = resultRepository.getPerformanceLevelDistribution();
+
+            Number poorCount = (Number) performanceDist.get("poor");
+            Number badCount = (Number) performanceDist.get("bad");
+            Number averageCount = (Number) performanceDist.get("average");
+            Number goodCount = (Number) performanceDist.get("good");
+            Number excellentCount = (Number) performanceDist.get("excellent");
+
+            Number rawTotalSubmisions = (Number) performanceDist.get("totalResults");
+            long totalSubmissions = (rawTotalSubmisions !=null )? rawTotalSubmisions.longValue() : 0L;
+
             return Map.of(
-                    "poor", getPercent(poorCount, totalSubmisions),
-                    "bad", getPercent(badCount, totalSubmisions),
-                    "average", getPercent(averageCount, totalSubmisions),
-                    "good", getPercent(goodCount, totalSubmisions),
-                    "excellent", getPercent(excellentCount, totalSubmisions)
+                    "poor", getPercent(poorCount.longValue(), totalSubmissions),
+                    "bad", getPercent(badCount.longValue(), totalSubmissions),
+                    "average", getPercent(averageCount.longValue(), totalSubmissions),
+                    "good", getPercent(goodCount.longValue(), totalSubmissions),
+                    "excellent", getPercent(excellentCount.longValue(), totalSubmissions)
             );
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
 
-    public List<Object[]> getSubjectPerformances(int grade){
+    public Map<String, Map<String, Map<String, Object>>> getSubjectPerformances(int grade){
         try{
-            Long maxGradePoints = resultRepository.getTotalMaxScoreForGrade(grade);
-            return resultRepository.getSubjectPerformancePercentages(Term.TERM_1, Term.TERM_2, grade, maxGradePoints);
+            List<Object[]> rawResults = resultRepository.findSubjectPerformanceByTermsAndGrade(List.of("TERM_2", "TERM_1"), 10);
+
+            Map<String, Map<String, Map<String, Object>>> finalResult = new LinkedHashMap<>();
+
+            for (Object[] row : rawResults) {
+                String term = (String) row[0];
+                String subjectCode = (String) row[2];
+
+                Map<String, Object> subjectData = new LinkedHashMap<>();
+                subjectData.put("id", row[1]);
+                subjectData.put("name", row[3]);
+                subjectData.put("totalScore", row[4]);
+                subjectData.put("maxTotalScore", row[5]);
+                subjectData.put("performance", row[6]);
+
+                finalResult.computeIfAbsent(term, k -> new LinkedHashMap<>())
+                        .put(subjectCode, subjectData);
+            }
+
+            return finalResult;
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
 
-    double getPercent(long amount, long total){//DecimalFormat form
-        if(total<1) return 0.0;
-        return ((double)amount/(double)total)*100;
+    public List<ActivityLogDTO> getRecentActivities(){
+        return activityLogRepository.findRecentActivities(5)
+                .stream().map(ActivityLogDTO::new).collect(Collectors.toList());
+    }
+
+    static double getPercent(long amount, long max){
+        if(max<1) return 0.0;
+        double result = ((double) amount / max) * 100;
+        return Math.round(result*100.0)/100.0; //Rounded to 2dp
     }
 }

@@ -31,6 +31,10 @@ public class Student {
     @OneToMany(mappedBy = "student", cascade = CascadeType.ALL)
     @JsonIgnoreProperties("student")
     private List<Result> results;
+    @OneToMany(mappedBy = "student")
+    List<Report> reports;
+    @OneToMany(mappedBy = "student")
+    private List<ClassAttendance> classAttendances;
 
     public enum Status {INACTIVE, ACTIVE, COMPLETED}
     public enum Gender { MALE, FEMALE };
@@ -93,5 +97,25 @@ public class Student {
 
     public List<Result> getResults() {
         return results;
+    }
+
+    public void setResults(List<Result> results) {
+        this.results = results;
+    }
+
+    public List<Report> getReports() {
+        return reports;
+    }
+
+    public void setReports(List<Report> reports) {
+        this.reports = reports;
+    }
+
+    public List<ClassAttendance> getClassAttendances() {
+        return classAttendances;
+    }
+
+    public void setClassAttendances(List<ClassAttendance> classAttendances) {
+        this.classAttendances = classAttendances;
     }
 }

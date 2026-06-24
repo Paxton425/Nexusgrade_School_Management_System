@@ -1,7 +1,7 @@
 package com.nexusgrade.app.dto;
 
 import com.nexusgrade.app.model.Result;
-import com.nexusgrade.app.model.Result.Term;
+import com.nexusgrade.app.model.Term;
 import com.nexusgrade.app.model.*;
 import com.nexusgrade.app.model.Student;
 
@@ -70,7 +70,7 @@ public class StudentReportDTO {
         this.lowestMark = lowestMark;
     }
 
-    public TreeMap<String, TreeMap<Result.Term, TermResult>> getResults() {
+    public TreeMap<String, TreeMap<Term, TermResult>> getResults() {
         return results;
     }
 
@@ -90,7 +90,7 @@ public class StudentReportDTO {
         this.averagePerTerm = averagePerTerm;
     }
 
-    public void setResults(TreeMap<String, TreeMap<Result.Term, TermResult>> results) {
+    public void setResults(TreeMap<String, TreeMap<Term, TermResult>> results) {
         this.results = results;
     }
 }

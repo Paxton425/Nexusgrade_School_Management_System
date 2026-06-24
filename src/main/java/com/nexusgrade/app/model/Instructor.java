@@ -24,7 +24,11 @@ public class Instructor {
             joinColumns = @JoinColumn(name = "instructor_id"),
             inverseJoinColumns = @JoinColumn(name = "school_class_id"))
     @JsonIgnoreProperties("instructors")
-    private List<SchoolClass> schoolClasses; // Added missing private access modifier
+    private List<SchoolClass> assignedClasses;
+    @OneToMany(mappedBy = "classTeacher")
+    private List<SchoolClass> administeredClasses; // Classes playing class teacher role
+    @OneToMany(mappedBy = "instructor")
+    private List<TimeTablePeriod> timeTablePeriods;
 
     public enum Title { TEACHER, HOD, VICE_PRINCIPAL, PRINCIPAL }
 
@@ -41,6 +45,27 @@ public class Instructor {
     public Department getDepartment() { return department; }
     public void setDepartment(Department department) { this.department = department; }
 
-    public List<SchoolClass> getSchoolClasses() { return schoolClasses; }
-    public void setSchoolClasses(List<SchoolClass> schoolClasses) { this.schoolClasses = schoolClasses; }
+    public List<SchoolClass> getAdministeredClasses() {
+        return administeredClasses;
+    }
+
+    public void setAdministeredClasses(List<SchoolClass> administeredClasses) {
+        this.administeredClasses = administeredClasses;
+    }
+
+    public List<SchoolClass> getAssignedClasses() {
+        return assignedClasses;
+    }
+
+    public void setAssignedClasses(List<SchoolClass> assignedClasses) {
+        this.assignedClasses = assignedClasses;
+    }
+
+    public List<TimeTablePeriod> getTimeTablePeriods() {
+        return timeTablePeriods;
+    }
+
+    public void setTimeTablePeriods(List<TimeTablePeriod> timeTablePeriods) {
+        this.timeTablePeriods = timeTablePeriods;
+    }
 }

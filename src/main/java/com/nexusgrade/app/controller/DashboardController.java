@@ -3,11 +3,12 @@ package com.nexusgrade.app.controller;
 import com.nexusgrade.app.dto.ResultDTO;
 import com.nexusgrade.app.model.ActivityLog;
 import com.nexusgrade.app.model.Result;
-import com.nexusgrade.app.model.Result.Term;
 import com.nexusgrade.app.repository.StudentRepository;
 import com.nexusgrade.app.repository.InstructorRepository;
 import com.nexusgrade.app.service.DashboardService;
 import com.nexusgrade.app.service.GradingService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -25,6 +26,8 @@ public class DashboardController {
     @Autowired GradingService gradingService;
     @Autowired DashboardService dashboardService;
 
+    Logger logger = LoggerFactory.getLogger(DashboardController.class);
+
     StudentRepository studentRepository;
     InstructorRepository instructorRepository;
     DashboardController(StudentRepository studentRepository, InstructorRepository instructorRepository){
@@ -40,24 +43,23 @@ public class DashboardController {
     @GetMapping("/data")
     public ResponseEntity<?> dashboard() {
 
-        Term currentTerm = Term.TERM_1;
-
+        logger.info("\n======= Handling Dashboard Request =======");
         try{
             Map<String, Object> dashboardData = dashboardService.getDashboardDataFromCache();
             return ResponseEntity.ok(dashboardData);
-
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Something went wrong while fetching dashboard data \n{}", e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Something Went wrong");
         }
     }
+
     @GetMapping("/gradeperfomance")
     ResponseEntity<?> getGradePerfomance(@RequestParam int grade){
         try{
-            List<Object[]> data = dashboardService.getSubjectPerformances(grade);
+            Map data = dashboardService.getSubjectPerformances(grade);
             return ResponseEntity.ok(data);
         } catch(Exception e){
-            e.printStackTrace();
+            logger.error("Something went wron while getting grade performance \n{}", e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Could not get grade perfomance!");
         }
     }

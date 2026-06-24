@@ -7,6 +7,7 @@ import com.nexusgrade.app.model.*;
 import com.nexusgrade.app.model.*;
 import com.nexusgrade.app.repository.*;
 import com.nexusgrade.app.service.AssessmentService;
+import com.nexusgrade.app.service.ReportService;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import tools.jackson.databind.ObjectMapper;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -28,22 +30,27 @@ import java.util.UUID;
 public class AssessmentsController {
     @Autowired
     AssessmentService assessmentService;
+    @Autowired
+    ReportService reportService;
 
     private AssessmentRepository assessmentRepository;
     private SubjectRepository subjectRepository;
     private ResultRepository resultRepository;
     private StudentRepository studentRepository;
     private ClassRepository classRepository;
+    private AcademicCalendarRepository calendarRepository;
     AssessmentsController(AssessmentRepository assessmentRepository,
                           SubjectRepository subjectRepository,
                           ResultRepository resultRepository,
                           StudentRepository studentRepository,
-                          ClassRepository classRepository){
+                          ClassRepository classRepository,
+                          AcademicCalendarRepository calendarRepository){
         this.assessmentRepository = assessmentRepository;
         this.subjectRepository = subjectRepository;
         this.resultRepository = resultRepository;
         this.subjectRepository = subjectRepository;
         this.classRepository = classRepository;
+        this.calendarRepository = calendarRepository;
     }
 
     @GetMapping("")
@@ -78,7 +85,7 @@ public class AssessmentsController {
         model.addAttribute("selectedType", type);
         model.addAttribute("searchQuery", search);
 
-        return "assessments/assessments";
+        return "assessments/assessment-list";
     }
 
     @GetMapping("/assessment/{id}")
@@ -203,7 +210,7 @@ public class AssessmentsController {
             redirectAttributes.addFlashAttribute("message", "Error saving assessment: " + e.getMessage());
             redirectAttributes.addFlashAttribute("alertClass", "alert-danger");
         }
-        return "redirect:/assessments";
+        return "redirect:/assessment-list";
     }
 
     @LogActivity(action = "deleted an assessment template", entityType = "ASSESSMENT")
@@ -218,7 +225,7 @@ public class AssessmentsController {
             redirectAttributes.addFlashAttribute("alertClass", "alert-danger");
             return "redirect:/assessments/assessment/{id}";
         }
-        return "redirect:/assessments";
+        return "redirect:/assessment-list";
     }
 
     @GetMapping("/record/{assessmentId}")
@@ -234,12 +241,13 @@ public class AssessmentsController {
                 enrolledStudents.add(student);
 
         Result result = new Result();
+        List<AcademicCalendar> currentYearCalendars = calendarRepository.findAllByAcademicYear(LocalDate.now().getYear());
         result.setAssessment(assessment); // Pre-link the assessment
 
         model.addAttribute("assessment", assessment);
         model.addAttribute("enrolledStudents", enrolledStudents);
         model.addAttribute("result", result);
-        model.addAttribute("terms", Result.Term.values());
+        model.addAttribute("calenders", currentYearCalendars);
 
         return "assessments/submission-form";
     }
@@ -254,7 +262,10 @@ public class AssessmentsController {
             return "redirect:/assessments/record/" + result.getAssessment().getId();
         }
 
-        resultRepository.save(result);
+        Result savedResults = resultRepository.save(result);
+
+        reportService.refreshStudentReport(savedResults.getStudent()); //Refresh report after marks updates
+
         ra.addFlashAttribute("message", "Mark recorded for student successfully!");
         ra.addFlashAttribute("alertClass", "alert-success");
 

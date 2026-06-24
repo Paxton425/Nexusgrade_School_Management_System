@@ -103,14 +103,14 @@
 }
 
 /* Color Highlights for KPIs */
-.kpi { border-top: 2px solid #00588f;}
+/* .kpi { border-top: 2px solid #00588f;} */
 .kpi:nth-child(3) { grid-row: span 2; }
 
 
 /* Update .grid to handle row heights better */
 .grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: 2fr 1fr;
     grid-auto-rows: minmax(350px, auto); /* Gives cards a baseline height */
     gap: 20px;
     margin-bottom: 30px;
@@ -126,6 +126,7 @@
     display: flex;
     flex-direction: column;
     min-height: 350px; /* Ensure a consistent minimum height */
+    max-height: 400px;
 }
 
 /* Let the container grow into the available card space */
@@ -243,11 +244,6 @@
 /* Activity Feed Overhaul */
 .activity.card {
     min-height: auto; /* Let content dictate height */
-}
-
-.activity-icon {
-    background-color: #c6c6c6;
-    border-radius: 2px;
 }
 
 .activity ul {

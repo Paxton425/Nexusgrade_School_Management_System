@@ -79,7 +79,7 @@
                         </div>
                     </td>
                     <td><span class="badge bg-light text-dark border" th:text="'Grade ' + ${result.getStudent().schoolClass.getGrade()} +' '+${result.getStudent().schoolClass.title}">Grade 10</span></td>
-                    <td th:text="${result.term}">TERM_1</td>
+                    <td th:text="${result.getAcademicCalendar().currentTerm}">TERM_1</td>
                     <td>
                         <span class="fw-bold" th:text="${result.score}">42</span>
                         <small class="text-secondary" th:text="'/ ' + ${assessment.maxPoints}">/ 50</small>

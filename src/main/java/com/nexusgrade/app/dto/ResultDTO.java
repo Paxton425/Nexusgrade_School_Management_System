@@ -1,9 +1,10 @@
 package com.nexusgrade.app.dto;
 
+import com.nexusgrade.app.model.AcademicCalendar;
 import com.nexusgrade.app.model.Assessment;
 import com.nexusgrade.app.model.Result;
 import com.nexusgrade.app.model.Student;
-import com.nexusgrade.app.model.Result.Term;
+import com.nexusgrade.app.model.Term;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -12,7 +13,7 @@ public class ResultDTO {
     Long Id;
     private Integer score;
     private AssessmentDTO assessment;
-    private Term term;
+    private AcademicCalendarDTO academicCalendar;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private StudentDTO student;
@@ -24,7 +25,7 @@ public class ResultDTO {
         this.score = result.getScore();
         this.assessment = new AssessmentDTO(result.getAssessment());
         this.student = StudentDTO.getEssentialsOnly(result.getStudent()); //sets id & names only
-        this.term = result.getTerm();
+        this.academicCalendar = new AcademicCalendarDTO(result.getAcademicCalendar());
         this.createdAt = result.getCreatedAt();
         this.updatedAt = result.getUpdatedAt();
     }
@@ -54,16 +55,16 @@ public class ResultDTO {
         return assessment;
     }
 
-    public void setAssessment(Assessment assessment) {
-        this.assessment = new AssessmentDTO(assessment);
+    public void setAssessment(AssessmentDTO assessment) {
+        this.assessment = assessment;
     }
 
-    public Term getTerm() {
-        return term;
+    public AcademicCalendarDTO getAcademicCalendar() {
+        return academicCalendar;
     }
 
-    public void setTerm(Term term) {
-        this.term = term;
+    public void setAcademicCalendar(AcademicCalendar academicCalendar) {
+        this.academicCalendar = new AcademicCalendarDTO(academicCalendar);
     }
 
     public LocalDateTime getCreatedAt() {

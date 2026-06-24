@@ -12,10 +12,13 @@ public class ActivityLog {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private String performedBy; // The user who performed the action (Teacher/Admin)
+    @ManyToOne
+    @JoinColumn(name = "performed_by")
+    private User performedBy; // The user who performed the action
+    private String performedByTitle; // (Teacher/Admin)
     private String action; // The type of action (e.g., "CREATE", "UPDATE", "DELETE", "LOGIN")
     private String entityType; // The category (e.g., "ASSESSMENT", "STUDENT", "GRADE")
-    private String entityId;
+    private String affectedEntity;
 
     // Descriptive message or JSON string of what changed
     @Column(columnDefinition = "TEXT")
@@ -30,11 +33,11 @@ public class ActivityLog {
     }
 
     public ActivityLog() {}
-    public ActivityLog(String performedBy, String action, String entityType, String entityId, String details) {
+    public ActivityLog(User performedBy, String action, String entityType, String affectedEntity, String details) {
         this.performedBy = performedBy;
         this.action = action;
         this.entityType = entityType;
-        this.entityId = entityId;
+        this.affectedEntity = affectedEntity;
         this.details = details;
     }
 
@@ -46,12 +49,20 @@ public class ActivityLog {
         this.id = id;
     }
 
-    public String getPerformedBy() {
+    public User getPerformedBy() {
         return performedBy;
     }
 
-    public void setPerformedBy(String performedBy) {
+    public void setPerformedBy(User performedBy) {
         this.performedBy = performedBy;
+    }
+
+    public String getPerformedByTitle() {
+        return performedByTitle;
+    }
+
+    public void setPerformedByTitle(String performedByTitle) {
+        this.performedByTitle = performedByTitle;
     }
 
     public String getAction() {
@@ -70,12 +81,12 @@ public class ActivityLog {
         this.entityType = entityType;
     }
 
-    public String getEntityId() {
-        return entityId;
+    public String getAffectedEntity() {
+        return affectedEntity;
     }
 
-    public void setEntityId(String entityId) {
-        this.entityId = entityId;
+    public void setAffectedEntity(String affectedEntity) {
+        this.affectedEntity = affectedEntity;
     }
 
     public String getDetails() {

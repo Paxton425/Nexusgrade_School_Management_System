@@ -3,7 +3,7 @@ package com.nexusgrade.app.service;
 import com.nexusgrade.app.model.*;
 import com.nexusgrade.app.model.Assessment;
 import com.nexusgrade.app.model.Result;
-import com.nexusgrade.app.model.Result.Term;
+import com.nexusgrade.app.model.Term;
 import com.nexusgrade.app.model.Student;
 import com.nexusgrade.app.model.Subject;
 import org.springframework.stereotype.Service;
@@ -29,7 +29,7 @@ public class GradingService {
     }
     public double calculateTermAverage(List<Result> grades, Term term){
         double average = grades.stream()
-                .filter(g -> g.getAssessment().getType() == Assessment.AssessmentType.SBA && g.getTerm() == term)
+                .filter(g -> g.getAssessment().getType() == Assessment.AssessmentType.SBA && g.getAcademicCalendar().getCurrentTerm().equals(term))
                 .mapToDouble(s -> computeMark(s.getScore(),s.getAssessment().getMaxPoints()))
                 .average().orElse(0.0);
         return  average;
@@ -43,12 +43,12 @@ public class GradingService {
     }
     public double calculateFinalMark(List<Result> grades, Subject subject, Term term) {
         double sba = grades.stream()
-                .filter(g -> g.getAssessment().getType().equals(Assessment.AssessmentType.SBA) && g.getAssessment().getSubject().equals(subject) && g.getTerm().equals(term))
+                .filter(g -> g.getAssessment().getType().equals(Assessment.AssessmentType.SBA) && g.getAssessment().getSubject().equals(subject) && g.getAcademicCalendar().getCurrentTerm().equals(term))
                 .mapToDouble(s -> computeMark(s.getScore(),s.getAssessment().getMaxPoints()))
                 .average().orElse(0.0);
 
         double exam = grades.stream()
-                .filter(g -> g.getAssessment().getType() == Assessment.AssessmentType.EXAM && g.getTerm() == term)
+                .filter(g -> g.getAssessment().getType() == Assessment.AssessmentType.EXAM && g.getAcademicCalendar().getCurrentTerm().equals(term))
                 .mapToDouble(s -> computeMark(s.getScore(),s.getAssessment().getMaxPoints()))
                 .findFirst().orElse(0.0);
 
@@ -60,7 +60,7 @@ public class GradingService {
         List<Result> filteredResults = grades.stream()
                 .filter(g -> g.getAssessment().getType().equals(Assessment.AssessmentType.SBA)
                         && g.getAssessment().getSubject().equals(subject)
-                        && g.getTerm().equals(term))
+                        && g.getAcademicCalendar().getCurrentTerm().equals(term))
                 .toList();
 
         double results = computeFinal(filteredResults);

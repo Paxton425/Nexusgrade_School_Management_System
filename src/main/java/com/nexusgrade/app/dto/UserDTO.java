@@ -2,6 +2,7 @@ package com.nexusgrade.app.dto;
 
 import com.nexusgrade.app.model.Instructor;
 import com.nexusgrade.app.model.User;
+import com.nexusgrade.app.model.User.Role;
 import jakarta.annotation.Nullable;
 import jakarta.persistence.*;
 
@@ -13,17 +14,34 @@ public class UserDTO {
 
     private UUID id;
     private String employeeId;
-    private String firstNames;
+    private String firstName;
+    private String middleName;
     private String lastName;
     private String username;
     private String email;
     private String phone;
     private User.Gender gender;
     private String password;
-    private Set<String> roles = new HashSet<>();
+    private Role role;
     private Instructor instructor;
 
     public enum Gender { MALE, FEMALE }
+
+    public UserDTO(){}
+    public UserDTO(User user){
+        this.id = user.getId();
+        this.employeeId = user.getEmployeeId();
+        this.firstName = user.getFirstName();
+        this.middleName = user.getMiddleName();
+        this.lastName = user.getLastName();
+        this.username = user.getUsername();
+        this.email = user.getEmail();
+        this.phone = user.getPhone();
+        this.gender = user.getGender();
+        this.password = user.getPassword();
+        this.role = user.getRole();
+    }
+
 
     public UUID getId() {
         return id;
@@ -41,12 +59,20 @@ public class UserDTO {
         this.employeeId = employeeId;
     }
 
-    public String getFirstNames() {
-        return firstNames;
+    public String getFirstName() {
+        return firstName;
     }
 
-    public void setFirstNames(String firstNames) {
-        this.firstNames = firstNames;
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
+    }
+
+    public String getMiddleName() {
+        return middleName;
+    }
+
+    public void setMiddleName(String middleName) {
+        this.middleName = middleName;
     }
 
     public String getLastName() {
@@ -97,12 +123,12 @@ public class UserDTO {
         this.password = password;
     }
 
-    public Set<String> getRoles() {
-        return roles;
+    public Role getRole() {
+        return role;
     }
 
-    public void setRoles(Set<String> roles) {
-        this.roles = roles;
+    public void setRole(Role role) {
+        this.role = role;
     }
 
     public Instructor getInstructor() {

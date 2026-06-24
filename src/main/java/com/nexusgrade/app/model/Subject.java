@@ -26,7 +26,7 @@ public class Subject {
     @ManyToMany(mappedBy = "subjects")
     List<SchoolClass> schoolClasses;
     @OneToMany(mappedBy = "subject")
-    List<StudentTermReport> studentTermReport;
+    List<TermReport> termReport;
 
     public Long getId() {
         return id;

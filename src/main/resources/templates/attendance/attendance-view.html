@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{common/layout :: layout(~{::main}, ~{::link}, ~{::scripts})}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Class Attendance - [[${className}]]</title>
+    <th:block th:fragment="link">
+        <!-- CSS -->
+        <link rel="stylesheet" th:href="@{/css/attendance.css}">
+        <!-- Font Awesome Icons -->
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+        <!-- Google Fonts -->
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    </th:block>
+</head>
+<body>
+
+<main>
+    <!-- ===== TOP BAR ===== -->
+    <div class="top-bar">
+        <div class="top-bar-left">
+            <button class="back-btn" onclick="history.back()">
+                <i class="fas fa-arrow-left"></i>
+            </button>
+            <div class="class-info">
+                <h1>[[${className}]]</h1>
+                <div class="meta">
+                    <span><i class="fas fa-clock"></i> [[${classPeriod}]]</span>
+                    <span><i class="fas fa-chalkboard-teacher"></i> [[${teacherName}]]</span>
+                    <span><i class="fas fa-door-open"></i> [[${roomNumber}]]</span>
+                    <span><i class="fas fa-users"></i> [[${totalStudents}]] Students</span>
+                </div>
+            </div>
+        </div>
+        <div class="top-bar-right">
+            <div class="date-display">
+                <i class="far fa-calendar-alt"></i> [[${currentDate}]]
+            </div>
+            <button class="submit-btn" onclick="submitAttendance()">
+                <i class="fas fa-check-circle"></i> Submit Attendance
+            </button>
+        </div>
+    </div>
+
+    <!-- ===== STATS ROW ===== -->
+    <div class="stats-row">
+        <div class="stat-card">
+            <div class="stat-label"><i class="fas fa-check-circle"></i> Present</div>
+            <div class="stat-value">[[${presentCount}]]</div>
+            <div class="stat-sub">[[${attendanceRate}]] attendance rate</div>
+        </div>
+        <div class="stat-card absent-stat">
+            <div class="stat-label"><i class="fas fa-times-circle"></i> Absent</div>
+            <div class="stat-value">[[${absentCount}]]</div>
+            <div class="stat-sub">[[${excusedAbsences}]] excused · [[${unexcusedAbsences}]] unexcused</div>
+        </div>
+        <div class="stat-card late-stat">
+            <div class="stat-label"><i class="fas fa-clock"></i> Late</div>
+            <div class="stat-value">[[${lateCount}]]</div>
+            <div class="stat-sub">Tardy arrivals</div>
+        </div>
+        <div class="stat-card rate-stat">
+            <div class="stat-label"><i class="fas fa-percent"></i> Overall</div>
+            <div class="stat-value">[[${totalStudents}]]</div>
+            <div class="stat-sub">Total enrolled</div>
+        </div>
+    </div>
+
+    <!-- ===== TOOLBAR ===== -->
+    <div class="toolbar">
+        <div class="toolbar-left">
+            <span class="total-badge"><i class="fas fa-user-graduate"></i> [[${totalStudents}]] Students</span>
+            <div class="bulk-actions">
+                <button class="bulk-btn all-present" onclick="markAll('Present')">
+                    <i class="fas fa-check"></i> All Present
+                </button>
+                <button class="bulk-btn" onclick="resetAll()">
+                    <i class="fas fa-undo"></i> Reset
+                </button>
+            </div>
+        </div>
+        <div class="toolbar-right">
+            <div class="search-box">
+                <i class="fas fa-search"></i>
+                <input type="text" id="searchInput" placeholder="Search students..." onkeyup="filterTable()">
+            </div>
+            <select class="filter-select" id="filterSelect" onchange="filterTable()">
+                <option value="all">All Status</option>
+                <option value="Present">Present</option>
+                <option value="Absent">Absent</option>
+                <option value="Late">Late</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- ===== STUDENT TABLE ===== -->
+    <div class="table-container">
+        <table>
+            <thead>
+            <tr>
+                <th style="width: 5%;">#</th>
+                <th style="width: 30%;">Student</th>
+                <th style="width: 12%;">Grade</th>
+                <th style="width: 40%;">Attendance Status</th>
+                <th style="width: 13%;">Excuse</th>
+            </tr>
+            </thead>
+            <tbody id="studentTableBody">
+            <tr th:each="student, iterStat : ${students}">
+                <td th:text="${iterStat.index + 1}"></td>
+                <td>
+                    <div class="student-info">
+                        <div class="avatar" th:text="${#strings.substring(student.name, 0, 1)}"></div>
+                        <div>
+                            <div class="student-name" th:text="${student.name}"></div>
+                            <div class="student-email" th:text="${student.email}"></div>
+                        </div>
+                    </div>
+                </td>
+                <td><span class="grade-badge" th:text="${student.grade}"></span></td>
+                <td>
+                    <div class="status-group" th:data-student-id="${student.id}">
+                        <button class="status-btn present"
+                                th:classappend="${student.status == 'Present'} ? 'active'"
+                                onclick="setStatus(this, 'Present')">
+                            <i class="fas fa-check"></i> Present
+                        </button>
+                        <button class="status-btn absent"
+                                th:classappend="${student.status == 'Absent'} ? 'active'"
+                                onclick="setStatus(this, 'Absent')">
+                            <i class="fas fa-times"></i> Absent
+                        </button>
+                        <button class="status-btn late"
+                                th:classappend="${student.status == 'Late'} ? 'active'"
+                                onclick="setStatus(this, 'Late')">
+                            <i class="fas fa-clock"></i> Late
+                        </button>
+                        <button class="status-btn excused"
+                                th:classappend="${student.status == 'Excused'} ? 'active'"
+                                onclick="setStatus(this, 'Excused')">
+                            <i class="fas fa-file-medical-alt"></i> Excused
+                        </button>
+                    </div>
+                </td>
+                <td>
+                        <span th:if="${student.hasExcuse}" class="excuse-badge">
+                            <i class="fas fa-check-circle"></i> On File
+                        </span>
+                    <span th:unless="${student.hasExcuse}" style="color: #a0aec0; font-size: 13px;">
+                            <i class="far fa-file"></i> None
+                        </span>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+</main>
+
+<!-- ===== JAVASCRIPT ===== -->
+<th:block th:fragment="scripts">
+    <script>
+        // ===== SET STATUS (Tap-to-Toggle) =====
+        function setStatus(button, status) {
+            const group = button.closest('.status-group');
+            const allBtns = group.querySelectorAll('.status-btn');
+
+            // If clicking the already active button, deselect it (reset to default)
+            if (button.classList.contains('active')) {
+                // Check if there's a "Present" button to set as default
+                const presentBtn = group.querySelector('.status-btn.present');
+                if (presentBtn) {
+                    allBtns.forEach(btn => btn.classList.remove('active'));
+                    presentBtn.classList.add('active');
+                    updateStats();
+                    return;
+                }
+            }
+
+            // Remove active from all, then add to clicked
+            allBtns.forEach(btn => btn.classList.remove('active'));
+            button.classList.add('active');
+
+            // Update stats
+            updateStats();
+        }
+
+        // ===== MARK ALL PRESENT =====
+        function markAll(status) {
+            const allGroups = document.querySelectorAll('.status-group');
+            allGroups.forEach(group => {
+                const btns = group.querySelectorAll('.status-btn');
+                btns.forEach(btn => btn.classList.remove('active'));
+
+                // Find the matching status button
+                const targetBtn = group.querySelector(`.status-btn.${status.toLowerCase()}`);
+                if (targetBtn) {
+                    targetBtn.classList.add('active');
+                } else {
+                    // Fallback to present
+                    const presentBtn = group.querySelector('.status-btn.present');
+                    if (presentBtn) presentBtn.classList.add('active');
+                }
+            });
+            updateStats();
+        }
+
+        // ===== RESET ALL =====
+        function resetAll() {
+            const allGroups = document.querySelectorAll('.status-group');
+            allGroups.forEach(group => {
+                const btns = group.querySelectorAll('.status-btn');
+                btns.forEach(btn => btn.classList.remove('active'));
+
+                const presentBtn = group.querySelector('.status-btn.present');
+                if (presentBtn) presentBtn.classList.add('active');
+            });
+            updateStats();
+        }
+
+        // ===== UPDATE STATS =====
+        function updateStats() {
+            const allGroups = document.querySelectorAll('.status-group');
+            let present = 0, absent = 0, late = 0, excused = 0;
+
+            allGroups.forEach(group => {
+                const activeBtn = group.querySelector('.status-btn.active');
+                if (activeBtn) {
+                    const status = activeBtn.textContent.trim().toLowerCase();
+                    if (status.includes('present')) present++;
+                    else if (status.includes('absent')) absent++;
+                    else if (status.includes('late')) late++;
+                    else if (status.includes('excused')) excused++;
+                } else {
+                    // Default to present if nothing is active
+                    present++;
+                }
+            });
+
+            const total = allGroups.length;
+            const rate = total > 0 ? ((present / total) * 100).toFixed(1) + '%' : '0%';
+
+            // Update stat cards
+            const statValues = document.querySelectorAll('.stat-card .stat-value');
+            if (statValues.length >= 4) {
+                statValues[0].textContent = present;
+                statValues[1].textContent = absent;
+                statValues[2].textContent = late;
+                statValues[3].textContent = total;
+            }
+
+            // Update rate sub-text
+            const rateSub = document.querySelector('.stat-card .stat-sub');
+            if (rateSub) {
+                rateSub.textContent = rate + ' attendance rate';
+            }
+
+            // Update absent sub-text with dummy data (keeps demo values)
+            // In a real app, you'd track excused vs unexcused per student
+        }
+
+        // ===== FILTER TABLE =====
+        function filterTable() {
+            const input = document.getElementById('searchInput');
+            const filter = document.getElementById('filterSelect');
+            const searchTerm = input.value.toLowerCase();
+            const statusFilter = filter.value;
+            const rows = document.querySelectorAll('#studentTableBody tr');
+
+            rows.forEach(row => {
+                const name = row.querySelector('.student-name')?.textContent.toLowerCase() || '';
+                const email = row.querySelector('.student-email')?.textContent.toLowerCase() || '';
+                const activeBtn = row.querySelector('.status-btn.active');
+                const status = activeBtn ? activeBtn.textContent.trim() : 'Present';
+
+                let matchesSearch = name.includes(searchTerm) || email.includes(searchTerm);
+                let matchesFilter = statusFilter === 'all' || status === statusFilter;
+
+                row.style.display = (matchesSearch && matchesFilter) ? '' : 'none';
+            });
+        }
+
+        // ===== SUBMIT ATTENDANCE =====
+        function submitAttendance() {
+            const allGroups = document.querySelectorAll('.status-group');
+            const attendanceData = [];
+
+            allGroups.forEach(group => {
+                const studentId = group.dataset.studentId;
+                const activeBtn = group.querySelector('.status-btn.active');
+                const status = activeBtn ? activeBtn.textContent.trim() : 'Present';
+
+                attendanceData.push({
+                    studentId: studentId,
+                    status: status,
+                    timestamp: new Date().toISOString()
+                });
+            });
+
+            console.log('📋 Attendance Data to Submit:', attendanceData);
+
+            // Show a success toast/alert
+            const btn = document.querySelector('.submit-btn');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
+            btn.disabled = true;
+
+            setTimeout(() => {
+                btn.innerHTML = '<i class="fas fa-check-circle"></i> Submitted!';
+                btn.style.background = '#38a169';
+
+                setTimeout(() => {
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                    btn.style.background = '';
+                }, 1500);
+            }, 1000);
+        }
+
+        // ===== INIT: Ensure default "Present" if nothing selected =====
+        document.addEventListener('DOMContentLoaded', function() {
+            const allGroups = document.querySelectorAll('.status-group');
+            allGroups.forEach(group => {
+                const hasActive = group.querySelector('.status-btn.active');
+                if (!hasActive) {
+                    const presentBtn = group.querySelector('.status-btn.present');
+                    if (presentBtn) presentBtn.classList.add('active');
+                }
+            });
+        });
+    </script>
+</th:block>
+</body>
+</html>

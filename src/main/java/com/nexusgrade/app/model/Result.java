@@ -7,6 +7,9 @@ import org.hibernate.annotations.UpdateTimestamp;
 import java.time.LocalDateTime;
 
 @Entity
+@Table(uniqueConstraints = {
+        @UniqueConstraint(columnNames = {"assessment_id", "student_id", "academic_calender_id"}) //Students cant have two marks for same assessment & year  
+})
 public class Result {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -15,8 +18,6 @@ public class Result {
     @ManyToOne
     @JoinColumn(name = "assessment_id")
     private Assessment assessment;
-    @Enumerated(EnumType.STRING)
-    private Term term;
     @Column(updatable = false)
     @CreationTimestamp
     private LocalDateTime createdAt;
@@ -25,10 +26,8 @@ public class Result {
     @ManyToOne
     @JoinColumn(name = "student_id")
     private Student student;
-
-    public enum Term {
-        TERM_1, TERM_2, TERM_3, TERM_4
-    };
+    @ManyToOne
+    AcademicCalendar academicCalendar;
 
     public Long getId() {
         return Id;
@@ -58,10 +57,6 @@ public class Result {
         this.student = student;
     }
 
-    public Term getTerm() {
-        return term;
-    }
-
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }
@@ -70,7 +65,11 @@ public class Result {
         return updatedAt;
     }
 
-    public void setTerm(Term term) {
-        this.term = term;
+    public AcademicCalendar getAcademicCalendar() {
+        return academicCalendar;
+    }
+
+    public void setAcademicCalendar(AcademicCalendar academicCalendar) {
+        this.academicCalendar = academicCalendar;
     }
 }
