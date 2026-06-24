@@ -1,12 +1,21 @@
+server:
+  forward-headers-strategy: framework
+
 spring:
   application:
     name: NexusGrade
 
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/nexusgrade_db?useSSL=false&serverTimezone=UTC
-    username: Paxton
-    password: 11paradise
+    url: ${DATABASE_URL}
+    username: ${DATABASE_USERNAME}
+    password: ${DATABASE_PASSWORD}
+    hikari:
+      minimum-idle: 5
+      maximum-pool-size: 10
+      idle-timeout: 30000
+      max-lifetime: 60000
+      connection-test-query: SELECT 1
 
   jpa:
     show-sql: true
@@ -15,6 +24,7 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQLDialect
+        default_batch_fetch_size: 25
 
   thymeleaf:
     cache: false

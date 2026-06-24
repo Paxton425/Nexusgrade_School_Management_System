@@ -49,13 +49,13 @@ $(document).ready(function() {
                 "data": "id",
                 "className": "text-end",
                 "render": (data) => `
-                    <a href="/students/student/${data}" class="btn btn-outline-primary btn-sm btn-action"><i class="bi bi-person-vcard"></i></a>
-                    <a href="/students/edit/${data}" class="btn btn-outline-warning btn-sm btn-action"><i class="bi bi-pencil-fill"></i></a>`
+                    <a href="/students/student/${data}" class="btn btn-outline-secondary btn-sm btn-action"><i class="bi bi-eye-fill"></i></a>
+                    <a href="/students/edit/${data}" class="btn btn-outline-primary btn-sm btn-action"><i class="bi bi-pencil-fill"></i></a>`
             }
         ]
     });
 
-    // Handle your custom search bar
+    // Custom search bar
     $('#studentSearch').on('keyup', function() {
         table.search(this.value).draw();
     });

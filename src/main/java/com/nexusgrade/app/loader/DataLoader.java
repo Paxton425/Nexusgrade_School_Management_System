@@ -4,179 +4,76 @@ import com.nexusgrade.app.model.*;
 import com.nexusgrade.app.repository.*;
 import com.nexusgrade.app.model.*;
 import com.nexusgrade.app.repository.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import java.time.LocalDate;
 import java.time.Month;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 @Component
 public class DataLoader implements CommandLineRunner {
+    @Autowired private UserRepository userRepository;
+    @Autowired private InstructorRepository instructorRepository;
     @Autowired private StudentRepository studentRepo;
     @Autowired private SubjectRepository subjectRepo;
     @Autowired private AssessmentRepository assessmentRepo;
     @Autowired private ResultRepository achievementRepo;
-    @Autowired private InstructorRepository teacherRepo;
     @Autowired private ClassRepository classRepository;
+    @Autowired private PasswordEncoder passwordEncoder;
 
     public void insertSampleData() {
 
-        // Create a Subjects
-        Subject subject = new Subject();
-        subject.setSubjectCode("CAT");
-        subject.setName("Computer Applications Technology");
-        subject.setDepartment(Department.SERVICES_AND_TECH);
-        subject.setGrade(10);
-        subject.setSbaWeight(0.25);
-        subject.setExamWeight(0.75);
-        subject = subjectRepo.save(subject);
+        Logger logger = LoggerFactory.getLogger(DataLoader.class);
 
-        Subject subject2 = new Subject();
-        subject2.setSubjectCode("Maths");
-        subject2.setName("Mathematics");
-        subject2.setDepartment(Department.MATHEMATICS);
-        subject2.setGrade(10);
-        subject2.setSbaWeight(0.25);
-        subject2.setExamWeight(0.75);
-        subject2 = subjectRepo.save(subject2);
+        try{
+            logger.info("============= CLEARING ALL USERS FROM DATABASE ============");
+            userRepository.deleteAll();
+            logger.info("============= SEEDING DATABASE ============");
+            User user = new User();
+            user.setFirstName("Sthandiwe");
+            user.setMiddleName("Nokwanda");
+            user.setLastName("Zwane");
+            user.setEmployeeId("EMP-001");
+            user.setGender(User.Gender.FEMALE);
+            user.setPhone("+278976543");
+            user.setEmail("sthandiwe@email.com");
+            user.setPassword(passwordEncoder.encode("Admin@Pass123")); // Hashes the text safely
+            user.setRole(User.Role.ADMIN);
+            user = userRepository.save(user);
 
-        //Create Classes
-        SchoolClass classA = new SchoolClass();
-        classA.setTitle("A");
-        classA.setGrade(10);
-        classA.setClassYear(2026);
-        classA.setSubjects(Arrays.asList(subject, subject2));
-        classA = classRepository.save(classA);
+            User user2 = new User();
+            user2.setFirstName("Patrick");
+            user2.setLastName("Mwelase");
+            user2.setEmployeeId("EMP-002");
+            user2.setGender(User.Gender.MALE);
+            user2.setPhone("+27785123694");
+            user2.setEmail("ptmwelase@email.com");
+            user2.setPassword(passwordEncoder.encode("Admin2@Pass123")); // Hashes the text safely
+            user2.setRole(User.Role.ADMIN);
+            user2 = userRepository.save(user2);
 
-        SchoolClass classB = new SchoolClass();
-        classB.setTitle("B");
-        classB.setGrade(10);
-        classB.setClassYear(2026);
-        classB = classRepository.save(classB);
+            Instructor instructor = new Instructor();
+            instructor.setDepartment(Department.HUMANITIES);
+            instructor.setTitle(Instructor.Title.HOD);
+            instructor.setUser(user);
 
-        SchoolClass classC = new SchoolClass();
-        classC.setTitle("C");
-        classC.setGrade(10);
-        classC.setClassYear(2026);
-        classC = classRepository.save(classC);
+            Instructor instructor2 = new Instructor();
+            instructor2.setDepartment(Department.SCIENCES);
+            instructor2.setTitle(Instructor.Title.HOD);
+            instructor2.setUser(user2);
 
-        // Create the Student
-        Student student = new Student();
-        student.setFirstName("Thabo");
-        student.setLastName("Mokoena");
-        student.setStatus(Student.Status.ACTIVE);
-        student.setGender(Student.Gender.MALE);
-        student.setBirthDay(LocalDate.of(2009, Month.AUGUST, 12));
-        student.setSchoolClass(classA);
-        student = studentRepo.save(student);
+            instructorRepository.saveAll(List.of(instructor, instructor2));
 
-        Student student2 = new Student();
-        student2.setFirstName("Lebogang");
-        student2.setLastName("Moroko");
-        student2.setStatus(Student.Status.INACTIVE);
-        student2.setGender(Student.Gender.FEMALE);
-        student2.setBirthDay(LocalDate.of(2009, Month.JUNE, 22));
-        student2.setSchoolClass(classB);
-        student2 = studentRepo.save(student2);
-
-        Student student3 = new Student();
-        student3.setFirstName("Maxwell");
-        student3.setLastName("Mchunu");
-        student3.setStatus(Student.Status.COMPLETED);
-        student3.setGender(Student.Gender.MALE);
-        student3.setBirthDay(LocalDate.of(2004, Month.DECEMBER, 22));
-        student3.setSchoolClass(classB);
-        student3 = studentRepo.save(student3);
-
-        Instructor instructor = new Instructor();
-        instructor.setFirstName("Sthandiwe");
-        instructor.setLastName("Zwane");
-        instructor.setEmployeeId("EM-001");
-        instructor.setDepartment(Department.SERVICES_AND_TECH);
-        instructor.setRole(Instructor.Role.HOD);
-        instructor.setSchoolClasses(List.of(classA, classB));
-        instructor.setGender(Instructor.Gender.FEMALE);
-        instructor.setPhone("08976543");
-        instructor.setEmail("sthandiwe@gmail.com");
-        instructor = teacherRepo.save(instructor);
-
-        // A Project (SBA) - Issued early, due mid-term
-        Assessment term1Project = new Assessment();
-        term1Project.setTitle("Term 1 Programming Project");
-        term1Project.setDescription("Comprehensive software development task focusing on CRUD operations, data validation, and GUI design basics.");
-        term1Project.setAssignmentIssueDate(LocalDate.of(2026, 2, 1));
-        term1Project.setAssignmentDeadline(LocalDate.of(2026, 3, 15));
-        term1Project.setType(Assessment.AssessmentType.SBA);
-        term1Project.setMaxPoints(50);
-        term1Project.setSubject(subject);
-        term1Project.setSchoolClasses(List.of(classA,classB, classC));
-        assessmentRepo.save(term1Project);
-
-        // A Standard Test (SBA) - Short window
-        Assessment term1Test = new Assessment();
-        term1Test.setTitle("Term 1 Programming Test");
-        term1Test.setDescription("Theoretical and practical assessment covering Object-Oriented Programming concepts, loops, and array manipulation.");
-        term1Test.setAssignmentIssueDate(LocalDate.of(2026, 3, 20));
-        term1Test.setAssignmentDeadline(LocalDate.of(2026, 3, 21)); // 24-hour take-home or controlled test
-        term1Test.setType(Assessment.AssessmentType.SBA);
-        term1Test.setMaxPoints(100);
-        term1Test.setSubject(subject);
-        term1Test.setSchoolClasses(List.of(classA,classB, classC));
-        assessmentRepo.save(term1Test);
-
-        // A PAT (Practical Assessment Task) - Long duration
-        Assessment itPat = new Assessment();
-        itPat.setTitle("Coding Practicals 1");
-        itPat.setDescription("Phase 1 of the Practical Assessment Task: Requirement analysis, database normalization, and initial architectural wireframing.");
-        itPat.setAssignmentIssueDate(LocalDate.of(2026, 2, 15));
-        itPat.setAssignmentDeadline(LocalDate.of(2026, 5, 30));
-        itPat.setType(Assessment.AssessmentType.PAT);
-        itPat.setMaxPoints(60);
-        itPat.setSubject(subject);
-        itPat.setSchoolClasses(List.of(classA,classB, classC));
-        assessmentRepo.save(itPat);
-
-        // Final Exam - The big one
-        Assessment exam = new Assessment();
-        exam.setTitle("Coding Exam");
-        exam.setDescription("Summative year-end examination covering the full curriculum: Advanced data structures, recursion, and complex problem-solving.");
-        exam.setAssignmentIssueDate(LocalDate.of(2026, 10, 15));
-        exam.setAssignmentDeadline(LocalDate.of(2026, 11, 15));
-        exam.setType(Assessment.AssessmentType.EXAM);
-        exam.setMaxPoints(120);
-        exam.setSubject(subject);
-        assessmentRepo.save(exam);
-
-        // Insert the actual Achievement (The Student's Marks)
-        Result projectGrade = new Result();
-        projectGrade.setStudent(student);
-        projectGrade.setAssessment(term1Project);
-        projectGrade.setTerm(Result.Term.TERM_1);
-        projectGrade.setScore(42); // 42/50
-        achievementRepo.save(projectGrade);
-
-        Result testGrade = new Result();
-        testGrade.setStudent(student);
-        testGrade.setAssessment(term1Test);
-        testGrade.setTerm(Result.Term.TERM_1);
-        testGrade.setScore(78); // 78/100
-        achievementRepo.save(testGrade);
-
-        Result patGrade = new Result();
-        patGrade.setStudent(student);
-        patGrade.setTerm(Result.Term.TERM_1);
-        patGrade.setAssessment(itPat);
-        patGrade.setScore(85); // 85/100
-        achievementRepo.save(patGrade);
-
-        Result examGrade = new Result();
-        examGrade.setStudent(student);
-        examGrade.setTerm(Result.Term.TERM_1);
-        examGrade.setAssessment(exam);
-        examGrade.setScore(98); // 98/120
-        achievementRepo.save(examGrade);
+            logger.info("============= DATABASE SEEDING COMPLETE ============");
+        } catch (Exception e) {
+            logger.error("======== DB SEEDING FAILED! =======\n"+e.getMessage());
+        }
     }
 
     @Override

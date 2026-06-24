@@ -1,0 +1,51 @@
+:root {
+    --primary-color: #064577;
+    --secondary-color: #1063a5;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: #eceff3;
+    color: var(--primary-color);
+    min-height: 100vh;
+}
+/* Custom deep teal matching your sidebar theme accent */
+.bg-teal-deep {
+    background-color: var(--primary-color);
+}
+.btn-teal {
+    background-color: var(--primary-color);
+    color: #ffffff;
+    transition: all 0.2s ease-in-out;
+}
+.btn-teal:hover {
+    background-color: var(--secondary-color);
+    color: #ffffff;
+    box-shadow: var(--primary-color);
+}
+.form-control:focus {
+    border-color: var(--primary-color);
+    box-shadow: var(--primary-color);
+}
+/* Custom Role Selector Styling */
+.role-selector input[type="radio"] {
+    display: none;
+}
+.role-selector label {
+    display: block;
+    padding: 10px 14px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    cursor: pointer;
+    text-align: center;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+.role-selector input[type="radio"]:checked + label {
+    background: rgba(13, 46, 56, 0.06);
+    border-color: #0d2e38;
+    color: #0d2e38;
+    font-weight: 600;
+}

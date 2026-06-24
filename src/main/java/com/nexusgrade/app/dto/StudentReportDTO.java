@@ -23,7 +23,7 @@ public class StudentReportDTO {
        public double average;
        public Integer gradeLevel;
 
-       public TermResult( double finalGrade, double average, Integer gradeLevel) {
+       public TermResult(double finalGrade, double average, Integer gradeLevel) {
            this.finalGrade = finalGrade;
            this.average = average;
            this.gradeLevel = gradeLevel;

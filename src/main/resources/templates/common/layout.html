@@ -1,83 +1,163 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" th:fragment="layout(content, style, scripts)">
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:fragment="layout(content, style, scripts)">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title th:text="${title} ?: 'Grading Portal'">Grading Portal</title>
+    <title th:text="${title} ?: 'Nexus Portal'">Nexus Portal</title>
 
     <th:block th:fragment="layout-css">
         <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.3.8/css/bootstrap.min.css}" media="screen">
         <link rel="stylesheet" th:href="@{/webjars/bootstrap-icons/1.13.1/font/bootstrap-icons.min.css}">
         <link rel="stylesheet" th:href="@{/css/layout.css}" href="../../static/css/layout.css">
         <link rel="stylesheet" th:href="@{/webjars/datatables/2.3.7/css/dataTables.dataTables.css}">
+        <link rel="stylesheet" th:href="@{/webjars/font-awesome/7.2.0/css/all.min.css}">
         <link rel="stylesheet" th:href="@{/webjars/datatables/2.3.7/css/dataTables.bootstrap5.css}">
     </th:block>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght=300;400;500;600;700&display=swap" rel="stylesheet">
 
     <th:block th:if="${style != null}">
         <th:block th:replace="${style} ?: _"></th:block>
     </th:block>
 </head>
 <body>
-<div class="layout">
+<div class="layout" sec:authorize="isAuthenticated()">
     <div class="sidebar">
         <div class="sidebar-container">
             <div class="sidebar-head">
                 <div class="navbar-brand">
-                    <img class="logo-image" th:src="@{/images/bar-graph.png}" alt="bar-graph logo"/>
-                    <h4 class="brand pt-2"> Nexus Grade </h4>
+                    <img class="logo-image" th:src="@{/images/logo.png}" alt="logo"/>
                 </div>
             </div>
+
             <div class="sidebar-content">
+                <div class="p-3">
+                    <a class="nav-link px-3 py-2 rounded d-flex align-items-center gap-3 text-white text-decoration-none"
+                       th:href="@{/dashboard}" style="background: rgba(255,255,255,0.05)">
+                        <i class="bi bi-speedometer2 text-primary"></i>
+                        <span style="font-size: 1.02rem; font-weight: 500;">Dashboard Overview</span>
+                    </a>
+                </div>
+
                 <section class="sidebar-nav-section">
-                    <p class="fw-bold">Dashboard</p>
-                    <ul class="sidebar-nav">
-                        <li class="nav-item"><a class="nav-link" th:href="@{/dashboard}"><i class="bi bi-speedometer"></i> Dashboard</a></li>
-                    </ul>
+                    <p><i class="bi bi-backpack-fill"></i> Students</p>
+                    <div class="sidebar-nav-wrapper">
+                        <ul class="sidebar-nav">
+                            <li class="nav-item"><a class="nav-link" th:href="@{/students}"><i class="bi bi-person-badge"></i> View All</a></li>
+                            <li class="nav-item"><a class="nav-link" th:href="@{/students/create}"><i class="bi bi-person-plus"></i> Enroll Student</a></li>
+                            <li class="nav-item"><a class="nav-link" th:href="@{/students/grades}"><i class="bi bi-graph-up"></i> Grade Book</a></li>
+                        </ul>
+                    </div>
+                </section>
+
+                <section class="sidebar-nav-section">
+                    <p><i class="bi bi-journal-text"></i> Assessments</p>
+                    <div class="sidebar-nav-wrapper">
+                        <ul class="sidebar-nav">
+                            <li class="nav-item"><a class="nav-link" th:href="@{/assessments}"><i class="bi bi-journal-text"></i> All Templates</a></li>
+                            <li class="nav-item"><a class="nav-link" th:href="@{/assessments/create}"><i class="bi bi-file-earmark-plus"></i> New Template</a></li>
+                        </ul>
+                    </div>
+                </section>
+
+                <section class="sidebar-nav-section">
+                    <p><i class="bi bi-briefcase-fill"></i> Staff</p>
+                    <div class="sidebar-nav-wrapper">
+                        <ul class="sidebar-nav">
+                            <li class="nav-item"><a class="nav-link" th:href="@{/instructors}"><i class="bi bi-person-workspace"></i> Instructors</a></li>
+                            <li class="nav-item"><a class="nav-link" th:href="@{/instructors/create}"><i class="bi bi-person-plus-fill"></i> Register Staff</a></li>
+                        </ul>
+                    </div>
+                </section>
+
+                <section class="sidebar-nav-section">
+                    <p><i class="bi bi-book"></i> Classes</p>
+                    <div class="sidebar-nav-wrapper">
+                        <ul class="sidebar-nav">
+                            <li class="nav-item"><a class="nav-link" th:href="@{/classes}"><i class="bi bi-collection"></i> Manage Classes</a></li>
+                            <li class="nav-item"><a class="nav-link" th:href="@{/classes/create}"><i class="bi bi-folder-plus"></i> Open New Class</a></li>
+                        </ul>
+                    </div>
+                </section>
+                <section class="sidebar-nav-section" sec:authorize="hasRole('ROLE_ADMIN')">
+                    <p><i class="bi bi-flask"></i> Subjects</p>
+                    <div class="sidebar-nav-wrapper">
+                        <ul class="sidebar-nav">
+                            <li class="nav-item"><a class="nav-link" th:href="@{/subjects}"><i class="bi bi-flask-fill"></i> Subjects</a></li>
+                            <li class="nav-item"><a class="nav-link" th:href="@{/subjects/create}"><i class="bi bi-clipboard2-plus-fill"></i>Add Subject</a></li>
+                        </ul>
+                    </div>
                 </section>
                 <section class="sidebar-nav-section">
-                    <p class="fw-bold">Students</p>
-                    <ul class="sidebar-nav">
-                        <li class="nav-item"><a class="nav-link" th:href="@{/students}"><i class="bi bi-mortarboard-fill"></i> Students</a></li>
-                        <li class="nav-item"><a class="nav-link" th:href="@{/students/create}"><i class="bi bi-plus-circle-fill"></i> Add Student</a></li>
-                        <li class="nav-item"><a class="nav-link" th:href="@{/students/grades}"> <i class="bi bi-bar-chart-line"></i> Grades</a></li>
-                    </ul>
-                </section>
-                <section class="sidebar-nav-section">
-                    <p class="fw-bold">Assessments</p>
-                    <ul class="sidebar-nav">
-                        <li class="nav-item"><a class="nav-link" th:href="@{/assessments}"><i class="bi bi-clipboard2-data"></i> Assessments</a></li>
-                        <li class="nav-item"><a class="nav-link" th:href="@{/assessments/create}"><i class="bi bi-clipboard-plus"></i> Add Assessment</a></li>
-                    </ul>
-                </section>
-                <section class="sidebar-nav-section">
-                    <p class="fw-bold">Instructors & Staff</p>
-                    <ul class="sidebar-nav">
-                        <li class="nav-item"><a class="nav-link" th:href="@{/instructors}"><i class="bi bi-briefcase-fill"></i> Teachers & Staff</a></li>
-                        <li class="nav-item"><a class="nav-link" th:href="@{/instructors/create}"><i class="bi bi-person-plus-fill"></i> Add Teacher</a></li>
-                    </ul>
-                </section>
-                <section class="sidebar-nav-section">
-                    <p class="fw-bold">Classes</p>
-                    <ul class="sidebar-nav">
-                        <li class="nav-item"><a class="nav-link" th:href="@{/classes}"><i class="bi bi-book"></i> Classes</a></li>
-                        <li class="nav-item"><a class="nav-link" th:href="@{/classes/create}"><i class="bi bi-journal-plus"></i> Add Class</a></li>
-                    </ul>
+                    <p><i class="bi bi-gear-wide-connected"></i> Settings</p>
+                    <div class="sidebar-nav-wrapper">
+                        <ul class="sidebar-nav">
+                        </ul>
+                    </div>
                 </section>
             </div>
         </div>
     </div>
     <div class="main-section">
         <div class="navbar">
-            <nav class="navbar-container navbar-expand-lg bg-white">
-                <div class="container-fluid d-flex align-items-center">
+            <nav class="navbar-container navbar-expand-lg bg-white w-full">
+                <div class="container-fluid d-flex align-items-center justify-content-between">
                     <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
                         <ol class="breadcrumb mb-0" id="breadcrumb-container">
                             <li class="breadcrumb-item"><a th:href="@{/}">Home</a></li>
                         </ol>
                     </nav>
+
+                    <div class="dropdown h-100">
+                        <div class="profile-widget d-flex align-items-center gap-3 bg-light px-3 py-2 rounded-pill border" th:if="${currentUser != null}">
+                            <div class="text-end d-none d-sm-block">
+                                <p class="mb-0 fw-bold text-dark lh-sm"
+                                   style="font-size: 0.9rem;"
+                                   th:text="${currentUser.firstName + ' ' + currentUser.lastName}">
+                                    Username
+                                </p>
+
+                                <span class="badge bg-primary-subtle text-primary border border-primary-subtle fw-semibold rounded-pill float-start"
+                                      style="font-size: 0.72rem; padding: 0.2em 0.6em;"
+                                      th:text="${#strings.capitalize(#strings.toLowerCase(currentUser.role))}">
+                                Role
+                            </span>
+                            </div>
+                            <img th:src="@{/images/default-logo.png}"
+                                 alt="Profile Image"
+                                 class="rounded-circle border border-2 border-white shadow-sm"
+                                 style="width: 38px; height: 38px; object-fit: cover;"/>
+                        </div>
+                        <div class="dropdown-content">
+                            <a th:href="@{/profile}" >My Profile <i class="bi bi-person-circle fs-5 text-primary float-end"></i></a>
+                            <a type="button" data-bs-toggle="modal" data-bs-target="#logOutModal">Sign Out <i class="fa-solid fa-right-from-bracket fs-5 ms-1 text-danger float-end"></i></a>
+                        </div>
+                        <!-- Modal -->
+                        <div class="modal fade" id="logOutModal" tabindex="-1" aria-labelledby="logOutModalLabel" aria-hidden="true">
+                            <div class="modal-dialog">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h1 class="modal-title fs-5" id="logOutModalLabel">Warning</h1>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        Terminate Login Session?
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                                            Cancel <i class="fa-solid fa-ban"></i>
+                                        </button>
+                                        <button id="logout-btn" class="btn btn-danger">
+                                            Sign Out <i class="fa-solid fa-right-from-bracket ms-1"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </nav>
         </div>
@@ -90,31 +170,69 @@
 <script th:src="@{/webjars/bootstrap/5.3.8/js/bootstrap.bundle.min.js}"></script>
 <script th:src="@{/webjars/datatables/2.3.7/js/dataTables.js}"></script>
 <script th:src="@{/webjars/datatables/2.3.7/js/dataTables.bootstrap5.min.mjs}"></script>
-<script>
+<script type="text/javascript">
     $(document).ready(() => {
-        const path = window.location.pathname;
-        const pathArray = path.split('/').filter(p => p); // Removes empty strings
-        const $container = $('#breadcrumb-container');
+        const logoutButton = document.getElementById("logout-btn");
+        function buildBreadCrumbs(){
+            const domain = window.location.host;
+            const path = window.location.pathname;
+            const pathArray = path.split('/').filter(p => p);
+            const $container = $('#breadcrumb-container');
 
-        let currentPath = '';
+            let currentPath = '';
+            console.log("domain: "+domain);
 
-        pathArray.forEach((segment, index) => {
-            currentPath += `${segment}`;
-            console.log(segment)
+            pathArray.forEach((segment, index) => {
+                currentPath += `${segment}`;
+                console.log(segment)
 
-            // Capitalize the first letter for display (e.g., "students" -> "Students")
-            const displayName = segment.charAt(0).toUpperCase() + segment.slice(1);
+                const displayName = segment.charAt(0).toUpperCase() + segment.slice(1);
 
-            if (index === pathArray.length - 1) {
-                // Last item is the current page (not a link)
-                $container.append(`<li class="breadcrumb-item active" aria-current="page">${displayName}</li>`);
-            } else {
-                // Intermediate items are clickable links
-                $container.append(`<li class="breadcrumb-item"><a href="${currentPath}">${displayName}</a></li>`);
-            }
-        });
+                if (index === pathArray.length - 1) {
+                    $container.append(`<li class="breadcrumb-item active" aria-current="page">${displayName}</li>`);
+                } else {
+                    $container.append(`<li class="breadcrumb-item"><a href="${domain+currentPath}">${displayName}</a></li>`);
+                }
+            });
 
-        console.log("Breadcrumbs generated for: " + path);
+            console.log("Breadcrumbs generated for: " + path);
+        }
+
+        buildBreadCrumbs();
+
+        const handleSecureLogout = (e) => {
+            e.target.disabled = true;
+            // 1. Extract the active CSRF token details generated by Spring Security
+            const csrfToken = /*[[${_csrf.token}]]*/ '';
+            const csrfHeader = /*[[${_csrf.headerName}]]*/ 'X-CSRF-TOKEN';
+
+            // 2. Build the server routing target path securely
+            const logoutUrl = /*[[@{/logout}]]*/ '/logout';
+
+            // 3. Execute an asynchronous POST request to your AuthController mapping
+            fetch(logoutUrl, {
+                method: 'POST',
+                headers: {
+                    // Attach the dynamic token so Spring accepts the request boundary
+                    [csrfHeader]: csrfToken
+                }
+            })
+                .then(response => {
+                    if (response.redirected) {
+                        // If the controller issues a 'redirect:/login?logout=true', follow it
+                        window.location.href = response.url;
+                    } else {
+                        // Fallback redirect if your controller returns a standard HTTP status body instead
+                        window.location.href = '/login?logout=true';
+                    }
+                })
+                .catch(error => {
+                    console.error('Logout script execution encountered a fault:', error);
+                    // Emergency fallback safety redirect
+                    window.location.href = '/login?error=true';
+                });
+        }
+        logoutButton.addEventListener("click", handleSecureLogout);
     });
 </script>
 <th:block th:if="${scripts != null}">

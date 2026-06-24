@@ -73,12 +73,12 @@
                                 <span th:text="${#strings.substring(result.student.firstName, 0, 1)}">T</span>
                             </div>
                             <div>
-                                <div class="fw-bold" th:text="${result.student.firstName + ' ' + result.student.lastName}">Thabo Mokoena</div>
+                                <div class="fw-bold" th:text="${result.student.firstName + ' ' + result.student.lastName}">Thabo Mokoenaa</div>
                                 <small class="text-muted" th:text="${result.student.gender}">MALE</small>
                             </div>
                         </div>
                     </td>
-                    <td><span class="badge bg-light text-dark border" th:text="'Grade ' + ${result.getStudent().schoolClass.getGrade()}">Grade 10</span></td>
+                    <td><span class="badge bg-light text-dark border" th:text="'Grade ' + ${result.getStudent().schoolClass.getGrade()} +' '+${result.getStudent().schoolClass.title}">Grade 10</span></td>
                     <td th:text="${result.term}">TERM_1</td>
                     <td>
                         <span class="fw-bold" th:text="${result.score}">42</span>

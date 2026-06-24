@@ -1,10 +1,14 @@
 package com.nexusgrade.app.controller;
 
+import com.nexusgrade.app.annotation.LogActivity;
 import com.nexusgrade.app.model.SchoolClass;
+import com.nexusgrade.app.model.Subject;
 import com.nexusgrade.app.repository.ClassRepository;
 import com.nexusgrade.app.repository.ResultRepository;
 import com.nexusgrade.app.repository.SubjectRepository;
 import jakarta.persistence.EntityNotFoundException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -13,6 +17,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.HashMap;
 import java.util.List;
@@ -25,6 +30,8 @@ public class SchoolClassController {
     private ClassRepository classRepository;
     private SubjectRepository subjectRepository;
     private ResultRepository resultRepository;
+
+    Logger logger = LoggerFactory.getLogger(StudentController.class);
 
     SchoolClassController(ResultRepository resultRepository,
                           SubjectRepository subjectRepository,
@@ -42,12 +49,47 @@ public class SchoolClassController {
     }
 
     @GetMapping("/view/{id}")
-    public String getSchoolClass(@PathVariable long id, Model model){
+    public String getSchoolClassView(@PathVariable long id, Model model){
         SchoolClass schoolClass = classRepository.findById(id)
                 .orElseThrow(()-> new EntityNotFoundException("Class Not found"));
         model.addAttribute("schoolClass", schoolClass);
 
         return "classes/class-view";
+    }
+
+    @GetMapping("/classes/create")
+    public String showCreateForm(Model model) {
+        model.addAttribute("schoolClass", new SchoolClass());
+        model.addAttribute("allSubjects", subjectRepository.findAll()); // Required for checkbox generation
+        return "classes/class-form";
+    }
+
+    @LogActivity(action = "updated a class", entityType = "CLASS")
+    @PostMapping("save")
+    public String saveStudent(@ModelAttribute SchoolClass schoolClass, RedirectAttributes ra){
+        try{
+            boolean isEdit = (schoolClass.getId() != null);
+            classRepository.save(schoolClass);
+
+            String msg = isEdit ? "updated" : "enrolled";
+            ra.addFlashAttribute("success", "Class " + schoolClass.getTitle() + " " + msg + " successfully!");
+            return "redirect:/classes";
+        } catch (Exception e){
+            logger.error("Save failed", e);
+            ra.addFlashAttribute("error", "Save failed: " + e.getMessage());
+            return schoolClass.getId() == null ? "redirect:/classes/create" : "redirect:/classes/edit/" + schoolClass.getId();
+        }
+    }
+
+    @GetMapping("/edit/{id}")
+    public String getClassEditForm(@PathVariable long id, Model model){
+        SchoolClass schoolClass = classRepository.findById(id)
+                .orElseThrow(()-> new EntityNotFoundException("Class Not found"));
+        List<Subject> subjects = subjectRepository.findAll();
+        model.addAttribute("schoolClass", schoolClass);
+        model.addAttribute("allSubjects", subjects);
+
+        return "classes/class-form";
     }
 
     @GetMapping("/data")

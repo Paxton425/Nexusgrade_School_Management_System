@@ -34,7 +34,7 @@
         <thead class="bg-dark text-white">
           <tr>
             <th rowspan="2" class="align-middle text-start ps-4">Learning Area (Subject)</th>
-            <th th:each="term : ${T(com.example.springbootmvcdemo.model.Result.Term).values()}"
+            <th th:each="term : ${termPeriods}"
               colspan="3" th:text="${term}">Term X</th>
           </tr>
 
@@ -47,17 +47,17 @@
           </tr>
         </thead>
         <tbody>
-        <tr th:each="entry : ${report.results}">
-          <td class="text-start ps-4 fw-bold text-dark" th:text="${entry.key}">Subject</td>
+        <tr th:each="termResult : ${report.getTermResults()}">
+          <td class="text-start ps-4 fw-bold text-dark" th:text="${termResult.subject.getName()}">Subject</td>
 
-          <th:block th:each="term : ${T(com.example.springbootmvcdemo.model.Result.Term).values()}">
-            <td th:with="res=${entry.value.get(term)}">
+          <th:block th:each="term : ${termPeriods}">
+            <td th:with="res=${termResult}">
               <span class="subject-grade" th:text="${res != null ? res.finalGrade + '%' : '-'}"></span>
             </td>
-            <td class="subject-average text-muted" th:with="res=${entry.value.get(term)}">
+            <td class="subject-average text-muted" th:with="res=${termResult}">
               <small th:text="${res != null ? res.average + '%' : '-'}"></small>
             </td>
-            <td class="subject-level fw-bold text-primary" th:with="res=${entry.value.get(term)}">
+            <td class="subject-level fw-bold text-primary" th:with="res=${termResult}">
               <span th:text="${res != null ? res.gradeLevel : '-'}"></span>
             </td>
           </th:block>
@@ -66,9 +66,9 @@
         <tfoot class="bg-light fw-bold">
         <tr>
           <td class="text-start ps-4">TERM TOTALS / AVERAGES</td>
-          <th:block th:each="term : ${T(com.example.springbootmvcdemo.model.Result.Term).values()}">
-            <td th:text="${#numbers.formatDecimal(report.totalsPerTerm.get(term), 1, 0)}"></td>
-            <td th:text="${#numbers.formatDecimal(report.averagePerTerm.get(term), 1, 1)} + '%'"></td>
+          <th:block th:each="termOverall : ${termOveralls.values()}">
+            <td th:text="${#numbers.formatDecimal(termOverall[0], 1, 0)}"></td>
+            <td th:text="${#numbers.formatDecimal(termOverall[1], 1, 1)} + '%'"></td>
             <td>-</td>
           </th:block>
         </tr>

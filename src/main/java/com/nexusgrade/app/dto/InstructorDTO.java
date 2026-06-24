@@ -2,6 +2,7 @@ package com.nexusgrade.app.dto;
 
 import com.nexusgrade.app.model.Department;
 import com.nexusgrade.app.model.Instructor;
+import com.nexusgrade.app.model.Instructor.Title;
 import com.nexusgrade.app.model.SchoolClass;
 
 import java.util.List;
@@ -13,13 +14,11 @@ public class InstructorDTO {
     private String lastName;
     private String employeeId;
     private Department department;
-    private Instructor.Role role;
-    private Instructor.Gender gender;
+    private Title title;
+    private Gender gender;
     private String email;
     private String phone;
     List<SchoolClass> instructorSchoolClasses;
-
-    public enum Role { TEACHER, HOD, ADMIN}
 
     public enum Gender { MALE, FEMALE };
 
@@ -59,19 +58,19 @@ public class InstructorDTO {
         this.department = department;
     }
 
-    public Instructor.Role getRole() {
-        return role;
+    public Title getTitle() {
+        return title;
     }
 
-    public void setRole(Instructor.Role role) {
-        this.role = role;
+    public void setTitle(Title title) {
+        this.title = title;
     }
 
-    public Instructor.Gender getGender() {
+    public Gender getGender() {
         return gender;
     }
 
-    public void setGender(Instructor.Gender gender) {
+    public void setGender(Gender gender) {
         this.gender = gender;
     }
 

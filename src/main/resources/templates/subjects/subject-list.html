@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{common/layout :: layout(~{::main}, ~{::link}, ~{::scripts})}">
+<head>
+    <meta charset="UTF-8">
+    <th:block th:fragment="link">
+        <script src="https://cdn.tailwindcss.com"></script>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    </th:block>
+</head>
+<body>
+
+<main class="container mx-auto my-10 p-5 text-gray-800">
+    <div>
+        <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i>
+            <span th:text="${success}">Success message here</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    </div>
+
+    <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">Academic Subjects</h1>
+            <p class="text-gray-500 mt-1">Manage curriculum subjects, weights, and class allocations.</p>
+        </div>
+        <a th:href="@{/subjects/create}"
+           class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg font-bold transition shadow-md flex items-center">
+            <i class="fas fa-plus mr-2"></i> Add New Subject
+        </a>
+    </div>
+
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+        <div class="bg-white p-4 mb-6 rounded-xl border border-gray-200 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <form th:action="@{/subjects}" method="get" id="filterForm" class="flex items-center gap-3">
+                <label for="grade" class="text-sm font-semibold text-gray-600">Filter by Grade:</label>
+                <select name="grade" id="grade"
+                        onchange="document.getElementById('filterForm').submit()"
+                        class="rounded-lg border-gray-300 text-sm focus:ring-blue-500 focus:border-blue-500 p-2 bg-gray-50">
+                    <option value="">All Grades</option>
+                    <option th:each="g : ${#numbers.sequence(8, 12)}"
+                            th:value="${g}"
+                            th:text="'Grade ' + ${g}"
+                            th:selected="${g == selectedGrade}">
+                    </option>
+                </select>
+
+                <a th:if="${selectedGrade != null}" th:href="@{/subjects}"
+                   class="text-xs text-red-500 hover:text-red-700 font-medium">
+                    <i class="fas fa-times-circle"></i> Clear
+                </a>
+            </form>
+
+            <div class="text-xs text-gray-400 font-mono">
+                Total Found: <span th:text="${subjectPage.totalElements}">0</span>
+            </div>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Subject Code</th>
+                    <th class="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Name & Dept</th>
+                    <th class="px-6 py-4 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">Grade</th>
+                    <th class="px-6 py-4 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">Assigned Classes</th>
+                    <th class="px-6 py-4 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">Weights (SBA/Exam)</th>
+                    <th class="px-6 py-4 text-right text-xs font-bold text-gray-500 uppercase tracking-wider">Actions</th>
+                </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-100">
+                <tr th:each="subject : ${subjectPage.content}" class="hover:bg-gray-50 transition">
+                    <td class="px-6 py-2 whitespace-nowrap">
+                        <span class="font-mono text-sm font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded" th:text="${subject.subjectCode}">MATH10</span>
+                    </td>
+                    <td class="px-6 py-2">
+                        <div class="text-sm font-semibold text-gray-900" th:text="${subject.name}">Mathematics</div>
+                        <div class="text-xs text-gray-400" th:text="${subject.department}">SCIENCE</div>
+                    </td>
+                    <td class="px-6 py-2 text-center">
+                        <span class="px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700" th:text="'Grade ' + ${subject.grade}">Grade 10</span>
+                    </td>
+                    <td class="px-6 py-2 text-center">
+                        <div class="flex items-center justify-center">
+                            <span class="text-sm font-bold text-gray-700" th:text="${#lists.size(subject.schoolClasses)}">5</span>
+                            <i class="fas fa-chalkboard text-gray-300 ml-2 text-xs"></i>
+                        </div>
+                    </td>
+                    <td class="px-6 py-2 text-center whitespace-nowrap">
+                        <div class="text-xs font-medium">
+                            <span class="text-green-600" th:text="${#numbers.formatPercent(subject.sbaWeight, 1, 0)}">25%</span>
+                            <span class="text-gray-300 mx-1">/</span>
+                            <span class="text-purple-600" th:text="${#numbers.formatPercent(subject.examWeight, 1, 0)}">75%</span>
+                        </div>
+                    </td>
+                    <td class="px-6 py-2 text-right whitespace-nowrap text-sm font-medium">
+                        <div class="flex justify-end space-x-2">
+                            <a th:href="@{/subjects/edit/{id}(id=${subject.id})}" class="text-gray-400 hover:text-blue-600 transition p-2">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <a th:href="@{/subjects/view/{id}(id=${subject.id})}" class="text-gray-400 hover:text-green-600 transition p-2">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                <tr th:if="${subjectPage.isEmpty()}">
+                    <td colspan="6" class="px-6 py-20 text-center">
+                        <div class="text-gray-400 italic">No subjects found in the curriculum database.</div>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div th:if="${subjectPage.totalPages > 0}" class="bg-gray-50 px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+            <div class="text-sm text-gray-500">
+                Showing <span class="font-medium" th:text="${subjectPage.number * subjectPage.size + 1}">1</span>
+                to <span th:text="${(subjectPage.number + 1) * subjectPage.size > subjectPage.totalElements ? subjectPage.totalElements : (subjectPage.number + 1) * subjectPage.size}">10</span>
+                of <span class="font-medium" th:text="${subjectPage.totalElements}">50</span> subjects
+            </div>
+            <div class="inline-flex space-x-1">
+                <a th:href="@{/subjects(page=${subjectPage.number - 1})}"
+                   th:classappend="${!subjectPage.hasPrevious() ? 'opacity-50 pointer-events-none' : ''}"
+                   class="px-3 py-1 bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-100 transition text-sm">
+                    Previous
+                </a>
+                <span class="px-4 py-1 text-sm font-bold text-blue-600" th:text="${subjectPage.number + 1}">1</span>
+                <a th:href="@{/subjects(page=${subjectPage.number + 1})}"
+                   th:classappend="${!subjectPage.hasNext() ? 'opacity-50 pointer-events-none' : ''}"
+                   class="px-3 py-1 bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-100 transition text-sm">
+                    Next
+                </a>
+            </div>
+        </div>
+    </div>
+</main>
+
+<th:block th:fragment="scripts">
+</th:block>
+
+</body>
+</html>

@@ -1,5 +1,8 @@
 package com.nexusgrade.app.controller;
 
+import com.nexusgrade.app.dto.ResultDTO;
+import com.nexusgrade.app.model.ActivityLog;
+import com.nexusgrade.app.model.Result;
 import com.nexusgrade.app.model.Result.Term;
 import com.nexusgrade.app.repository.StudentRepository;
 import com.nexusgrade.app.repository.InstructorRepository;
@@ -11,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.*;
 
@@ -38,35 +42,8 @@ public class DashboardController {
 
         Term currentTerm = Term.TERM_1;
 
-        Map<String, Object> dashboardData = new HashMap<>();
         try{
-            // Basic Stats
-            Map<String, Object> stats = dashboardService.getStats(currentTerm);
-            dashboardData.put("stats", stats);
-
-            // Grade distribution
-            Map<String, Double> gradeDistribution = dashboardService.getGradeDistribution(currentTerm);
-            dashboardData.put("gradeDistribution", gradeDistribution);
-
-            // Average scores per subject
-            Map<String, Integer> subjectScores = new LinkedHashMap<>();
-            subjectScores.put("Maths", 72);
-            subjectScores.put("Physics", 68);
-            subjectScores.put("Chemistry", 74);
-            subjectScores.put("History", 85);
-            subjectScores.put("English", 70);
-            dashboardData.put("subjectPerformance", subjectScores);
-
-            // Recent submissions
-            List<Map<String, String>> submissions = new ArrayList<>();
-
-            submissions.add(createSubmission("John Doe", "Math Assignment 1", "85"));
-            submissions.add(createSubmission("Sarah Smith", "Physics Lab", "78"));
-            submissions.add(createSubmission("Mike Brown", "Chemistry Test", "66"));
-            submissions.add(createSubmission("Anna White", "Programming Task", "92"));
-
-            dashboardData.put("submissions", submissions);
-
+            Map<String, Object> dashboardData = dashboardService.getDashboardDataFromCache();
             return ResponseEntity.ok(dashboardData);
 
         } catch (Exception e) {
@@ -74,13 +51,15 @@ public class DashboardController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Something Went wrong");
         }
     }
-
-    private Map<String, String> createSubmission(String student, String assignment, String grade) {
-        Map<String, String> map = new HashMap<>();
-        map.put("student", student);
-        map.put("assignment", assignment);
-        map.put("grade", grade);
-        return map;
+    @GetMapping("/gradeperfomance")
+    ResponseEntity<?> getGradePerfomance(@RequestParam int grade){
+        try{
+            List<Object[]> data = dashboardService.getSubjectPerformances(grade);
+            return ResponseEntity.ok(data);
+        } catch(Exception e){
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Could not get grade perfomance!");
+        }
     }
 
 }

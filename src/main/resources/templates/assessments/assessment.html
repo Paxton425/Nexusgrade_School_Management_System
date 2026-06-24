@@ -7,6 +7,11 @@
 </head>
 <body>
 <div th:fragment="content" id="assessment-detail-content">
+    <div th:if="${message}" th:class="'alert ' + ${alertClass} + ' alert-dismissible fade show'" role="alert">
+        <i class="bi" th:classappend="${alertClass == 'alert-success' ? 'bi-check-circle-fill' : 'bi-exclamation-triangle-fill'}"></i>
+        <span th:text="${message}">Message goes here</span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
     <header class="dashboard-head mb-4">
         <div class="d-flex align-items-center gap-3">
             <a th:href="@{/assessments}" class="btn btn-outline-secondary btn-sm">
@@ -35,11 +40,14 @@
                 <div class="row">
                     <div class="col-md-6">
                         <h6 class="text-muted text-uppercase small fw-bold">Maximum Score</h6>
-                        <h2 class="text-primary"><span th:text="${assessment.maxPoints}">0</span> <small class="fs-6 text-secondary">Points</small></h2>
+                        <h2 class="text-success"><span th:text="${assessment.maxPoints}">0</span> <small class="fs-6 text-secondary">Points</small></h2>
                     </div>
                     <div class="col-md-6">
                         <h6 class="text-muted text-uppercase small fw-bold">Submissions Received</h6>
-                        <h2 class="text-success" th:text="${submissionCount ?: 0}">0</h2>
+                        <h2 class="text-primary"
+                            th:text="|${stats.submittedCount() > 0 ? stats.submittedCount() : '0'}/${stats.totalEnrolled()}|">
+                            0
+                        </h2>
                     </div>
                 </div>
             </div>
@@ -88,7 +96,25 @@
                     <a class="btn btn-outline-primary text-start" th:href="@{/assessments/submissions/{id}(id=${assessment.id})}"><i class="bi bi-clipboard2-check"></i> View Submissions</a>
                     <a class="btn btn-outline-primary text-start" th:href="@{/assessments/edit/{id}(id=${assessment.id})}"><i class="bi bi-pencil-square me-2"></i> Edit Template</a>
                     <button class="btn btn-outline-success text-start"><i class="bi bi-file-earmark-arrow-down me-2"></i> Export Blank Form</button>
-                    <button class="btn btn-outline-danger text-start"><i class="bi bi-trash3 me-2"></i> Delete Assessment</button>
+                    <button class="btn btn-outline-danger text-start" data-bs-toggle="modal" data-bs-target="#delete_modal"><i class="bi bi-trash3 me-2"></i> Delete Assessment</button>
+                </div>
+            </div>
+
+            <div class="modal fade" id="delete_modal" tabindex="-1" role="dialog" aria-labelledby="delete_modal_label" aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="delete_modal_label">Delete Confirmation</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p th:text="|Delete ${assessment.title}?|">Delete Assessment!?</p>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Cancel</button>
+                            <a th:href="@{/assessments/delete/{id}(id=${assessment.getId()})}" type="button" class="btn btn-danger">Proceed</a>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -100,7 +126,7 @@
                     </div>
                     <div>
                         <p class="mb-0 fw-bold" th:text="${assessment.subject?.name}">Subject Name</p>
-                        <small class="text-muted">Grade 12 Curriculum</small>
+                        <small class="text-muted" th:text="|Grade ${assessment.getSubject().grade} Curriculum|">Grade</small>
                     </div>
                 </div>
             </div>

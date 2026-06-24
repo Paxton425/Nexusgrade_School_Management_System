@@ -2,115 +2,45 @@ package com.nexusgrade.app.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
-
 import java.util.List;
 import java.util.UUID;
 
 @Entity
 public class Instructor {
+
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @GeneratedValue(strategy = GenerationType.UUID) // FIX: UUIDs cannot use IDENTITY strategy
     private UUID id;
-    private String firstName;
-    private String lastName;
-    private String employeeId;
+    @OneToOne
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
     @Enumerated(EnumType.STRING)
     private Department department;
     @Enumerated(EnumType.STRING)
-    private Role role;
-    @Enumerated(EnumType.STRING)
-    private Gender gender;
-    private String email;
-    private String phone;
+    private Title title;
     @ManyToMany
     @JoinTable(
             name = "InstructorClass",
             joinColumns = @JoinColumn(name = "instructor_id"),
             inverseJoinColumns = @JoinColumn(name = "school_class_id"))
     @JsonIgnoreProperties("instructors")
-    List<SchoolClass> schoolClasses;
+    private List<SchoolClass> schoolClasses; // Added missing private access modifier
 
-    public enum Role {TEACHER, HOD, ADMIN}
+    public enum Title { TEACHER, HOD, VICE_PRINCIPAL, PRINCIPAL }
 
-    public enum Gender {MALE, FEMALE}
+    // --- Getters & Setters ---
+    public UUID getId() { return id; }
+    public void setId(UUID id) { this.id = id; }
 
-    public UUID getId() {
-        return id;
-    }
+    public User getUser() { return user; }
+    public void setUser(User user) { this.user = user; }
 
-    public void setId(UUID id) {
-        this.id = id;
-    }
+    public Title getTitle() { return title; }
+    public void setTitle(Title title) { this.title = title; }
 
-    public String getFirstName() {
-        return firstName;
-    }
+    public Department getDepartment() { return department; }
+    public void setDepartment(Department department) { this.department = department; }
 
-    public void setFirstName(String firstName) {
-        this.firstName = firstName;
-    }
-
-    public String getLastName() {
-        return lastName;
-    }
-
-    public void setLastName(String lastName) {
-        this.lastName = lastName;
-    }
-
-    public String getEmployeeId() {
-        return employeeId;
-    }
-
-    public void setEmployeeId(String employeeId) {
-        this.employeeId = employeeId;
-    }
-
-    public Department getDepartment() {
-        return department;
-    }
-
-    public void setDepartment(Department department) {
-        this.department = department;
-    }
-
-    public Role getRole() {
-        return role;
-    }
-
-    public void setRole(Role role) {
-        this.role = role;
-    }
-
-    public Gender getGender() {
-        return gender;
-    }
-
-    public void setGender(Gender gender) {
-        this.gender = gender;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public String getPhone() {
-        return phone;
-    }
-
-    public void setPhone(String phone) {
-        this.phone = phone;
-    }
-
-    public List<SchoolClass> getSchoolClasses() {
-        return schoolClasses;
-    }
-
-    public void setSchoolClasses(List<SchoolClass> schoolClasses) {
-        this.schoolClasses = schoolClasses;
-    }
+    public List<SchoolClass> getSchoolClasses() { return schoolClasses; }
+    public void setSchoolClasses(List<SchoolClass> schoolClasses) { this.schoolClasses = schoolClasses; }
 }

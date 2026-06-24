@@ -4,6 +4,7 @@ import com.nexusgrade.app.model.Instructor;
 import com.nexusgrade.app.model.SchoolClass;
 import com.nexusgrade.app.model.Student;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class SchoolClassDTO {
@@ -22,6 +23,12 @@ public class SchoolClassDTO {
         //this.instructors = schoolClass.getInstructors();
         //this.instructors = schoolClass.getInstructors();
         //this.students = schoolClass.getStudents();
+    }
+
+    public static List<SchoolClassDTO> ListOf(List<SchoolClass> schoolClasses){
+        List<SchoolClassDTO> cDTOs = schoolClasses.stream()
+                .map(c-> new SchoolClassDTO(c)).toList();
+        return cDTOs;
     }
 
     public Long getId() {

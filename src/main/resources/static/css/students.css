@@ -1,4 +1,4 @@
-/* Stiudents Lists */
+ /* Stiudents Lists */
 .table-container {
     background: white;
     border-radius: 15px;
@@ -158,7 +158,7 @@ tbody tr:hover {
 
 
 
-/* Report */
+/* StudentReport */
 .report-header {
     background: linear-gradient(to right, #ffffff, #f8f9fa);
     border-left: 6px solid #0d6efd; /* Light Blue range */

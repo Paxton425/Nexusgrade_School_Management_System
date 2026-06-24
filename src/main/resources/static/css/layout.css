@@ -1,13 +1,19 @@
+:root {
+    --sidebar-bg: #ffffff;
+    --sidebar-accent: #0081cf;
+    --text-main: #2d3748;
+    --text-muted: #3c3c3c;
+    --nav-hover: #f1f5f9;
+    --border-color: #e2e8f0;
+}
+
 body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    color: #333; /* Darker text for better contrast on white backgrounds */
+    font-family: 'Inter', sans-serif;
+    margin: 0;
+    background-color: #f8fafc;
 }
 
-/* Keep table data very legible */
-.table {
-    font-size: 0.9rem;
-}
-
+/* 1. THE FIXED LAYOUT */
 .layout {
     height: 100vh;
     width: 100%;
@@ -17,125 +23,171 @@ body {
 }
 
 .sidebar {
-    width: 20%;
+    width: 260px;
+    min-width: 260px;
+    background-color: var(--sidebar-bg);
     display: flex;
     flex-direction: column;
-    box-shadow: 0.28rem 0 0.8rem rgba(0, 0, 0, 0.148);
-}
-.sidebar-head {
-    height: 68px;
-}
-.navbar-brand {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-}
-.brand {
-    font-family: 'Inter', sans-serif;
-    font-weight: 568;
-    letter-spacing: -0.02em; /* Tighten it up for a premium look */
-}
-.logo-image {
-    width: 60px;
-    height: 50px;
-}
-.sidebar-content {
-    padding: 0;
-}
-.sidebar-nav {
-    list-style-type: none;
-    margin: 0;
-    padding: 0;
-    width: 100%;
-}
-.sidebar-nav-section {
-    padding: 0 0 0 12px;
-    margin-bottom: 2px;
-}
-.sidebar-nav-section > p {
-    color: #434343;
-    margin-bottom: 0;
-}
-.sidebar-nav > .nav-item {
-    height: 42px;
-    padding-left: 22px;
-    display: flex;
-    align-items: center;
-}
-.sidebar-nav > .nav-item {
-    height: 42px;
-    padding-left: 22px;
-    display: flex;
-    align-items: center;
-
-    /* define border upfront */
-    border: 1px solid transparent;
-    border-left-width: 4px;
-
-    /* start with no rounding */
-    border-top-left-radius: 0;
-    border-bottom-left-radius: 0;
-
-    transition: all 0.25s ease;
-}
-
-.sidebar-nav > .nav-item:hover {
-    color: #74b1d3;
-
-    /* just change color, not structure */
-    border-color: #0081cf;
-
-    border-top-left-radius: 6px;
-    border-bottom-left-radius: 6px;
-
-    /* smoother than removing border */
-    border-right-color: transparent;
+    box-shadow: 0.1rem 0 0.5rem rgba(0, 0, 0, 0.05);
+    z-index: 10;
+    border-right: 1px solid var(--border-color);
 }
 
 .main-section {
     height: 100vh;
-    width: 80%;
+    flex-grow: 1;
     display: flex;
     flex-direction: column;
+    min-width: 0;
 }
+.main-content {
+    background-color: #eaebec;
+}
+
+/* 2. SIDEBAR HEAD (Logo & Title Alignment) */
+.sidebar-head {
+    height: 68px;
+    display: flex;
+    align-items: center;
+    padding: 0 15px;
+}
+
+.navbar-brand {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+}
+
+.brand {
+    font-weight: 700;
+    color: var(--text-main);
+    margin: 0;
+    white-space: nowrap;
+    font-size: 1.32rem;
+}
+
+.logo-image {
+    width: 182px;
+    height: auto;
+}
+
+/* 3. THE HOVER SLIDE LOGIC */
+.sidebar-nav-section {
+    display: grid;
+    grid-template-rows: auto 0fr;
+    transition: grid-template-rows 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sidebar-nav-section:hover {
+    grid-template-rows: auto 1fr;
+    background-color: var(--nav-hover);
+}
+
+.sidebar-nav-section > p {
+    color: var(--text-muted);
+    font-size: 1.20rem;
+    padding: 15px 20px;
+    margin: 0;
+    cursor: pointer;
+}
+
+.sidebar-nav-wrapper {
+    overflow: hidden;
+}
+
+.sidebar-nav {
+    list-style: none;
+    padding: 0 10px 10px 10px;
+    margin: 0;
+}
+
+.nav-link {
+    color: var(--text-main) !important;
+    text-decoration: none;
+    font-size: 0.9rem;
+    padding: 10px 15px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.2s;
+}
+
+.nav-link i {
+    color: var(--sidebar-accent);
+}
+
+.nav-link:hover {
+    background: #e0f2fe;
+    color: var(--sidebar-accent) !important;
+    transform: translateX(5px);
+}
+
+/* 4. MAIN SECTION & NAVBAR */
 .navbar {
     min-height: 68px;
     max-height: 68px;
-    padding: 0 12px;
-    display: flex;
-    align-items: center; /* Vertical center */
-}
-.navbar-container {
-    height: 100%;
-    width: 100%;
+    padding: 0 20px;
+    background: #fff;
+    border-bottom: 1px solid var(--border-color);
     display: flex;
     align-items: center;
-    border-bottom: #d6d6d6 solid 1px;
-}
-/* Remove underline from breadcrumb links */
-.breadcrumb-item a {
-    text-decoration: none;
-    color: #0081cf; /* Slate grey to match your dashboard theme */
-    transition: color 0.2s ease-in-out;
 }
 
-/* Add a subtle color change on hover instead of an underline */
-.breadcrumb-item a:hover {
-    color: #3b82f6; /* Blue highlight */
-    text-decoration: none;
+.navbar-container {
+    width: 100%;
 }
-
 
 .main-content {
-    padding: 16px;
-    flex-grow: 1;        /* Added: Take up all remaining height */
-    overflow-y: auto;    /* Changed: 'auto' is cleaner than 'scroll' */
-    min-height: 0;
+    padding: 24px;
+    flex-grow: 1;
+    overflow-y: auto;
 }
 
+/* Breadcrumbs */
+.breadcrumb-item a {
+    text-decoration: none;
+    color: var(--sidebar-accent);
+}
 
-/* Add to your stylesheet */
-.table-blue-400 {
-    background-color: #09b2e6 !important; /* or whatever shade you want */
-    color: white;
+/*Drop down user menu*/
+.dropdown {
+    position: relative;
+}
+.dropdown-content {
+    display: none;
+    position: absolute;
+    top: 58px;
+    background-color: #f9f9f9;
+    min-width: 200px;
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+    border-radius: 20px;
+    z-index: 100;
+}
+.dropdown-content a {
+    color: black;
+    padding: 12px 16px;
+    text-decoration: none;
+    display: block;
+    transition-property: transform;
+    transition-duration: 10ms;
+    transition-timing-function: ease;
+}
+.dropdown-content > a {
+    border-radius: 20px;
+}
+.dropdown-content a:hover {
+    background: #e0f2fe;
+    color: var(--sidebar-accent) !important;
+    transform: translateX(2px);
+}
+
+.dropdown:hover .dropdown-content {
+    display: block;
+}
+
+.dropdown:hover .profile-widget {
+    background-color: #e3e3e3;
 }

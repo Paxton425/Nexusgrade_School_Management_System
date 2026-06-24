@@ -2,56 +2,52 @@
 <html xmlns:th="http://www.thymeleaf.org"
       th:replace="~{common/layout :: layout(~{::content}, ~{::link}, ~{::dashboard-scripts})}">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <Title>Analytics Dashboard</Title>
     <link rel="stylesheet" th:href="@{/css/dashboard.css}">
 </head>
 <body>
 <div th:fragment="content" id="dashboard-content">
+
+    <!-- Header -->
     <header class="dashboard-head">
         <div>
             <h1>Dashboard</h1>
             <p>Track performance, trends & insights</p>
         </div>
-        <div class="actions mb-2 d-flex align-items-center gap-2">
-            <select class="form-select form-select-sm" style="width: auto;">
-                <option selected>Select Term</option>
-                <option value="1">Term 1</option>
-                <option value="2"> Term 2</option>
-                <option value="3">Term 3</option>
-                <option value="3">Term 4</option>
-            </select>
-
-            <input type="text" class="form-control form-control-sm" placeholder="Search student..." style="width: 200px;">
-
-            <button class="btn btn-primary btn-export">
-                <i class="bi bi-arrow-down"></i> Export
-            </button>
-        </div>
     </header>
 
+    <!-- KPIs Section -->
     <section class="kpis">
         <div class="kpi">
             <span>Total Students</span>
             <h2 id="studentsCount" th:text="${totalStudents}">120</h2>
-            <small class="up">↑ 5% from last term</small>
+            <small class="up text-success">↑ 5% from last term</small>
         </div>
         <div class="kpi">
-            <span>Average Score</span>
+            <span>Overall Average Score</span>
             <h2 id="averageGrade" th:text="${averageGrade}">76%</h2>
-            <small class="down">↓ 2% vs Target</small>
+            <small class="down text-danger">↓ 2% vs Target</small>
+        </div>
+        <div class="kpi card">
+            <div class="chart-container">
+                <canvas id="performanceRadar"></canvas>
+            </div>
         </div>
         <div class="kpi">
             <span>Pass Rate</span>
             <h2 id="passRate" th:text="${passRate}">89%</h2>
-            <small class="up">↑ 3% overall</small>
+            <small class="up text-success">↑ 3% overall</small>
         </div>
         <div class="kpi">
             <span>At Risk</span>
             <h2 id="atRisk" class="text-danger">14</h2>
-            <small class="warn">Action Required</small>
+            <small class="warn text-danger">Action Required</small>
         </div>
     </section>
 
+    <!-- Charts Grid -->
     <section class="grid">
         <div class="card">
             <h3>Performance Trend</h3>
@@ -60,24 +56,25 @@
             </div>
         </div>
         <div class="card">
-            <h3>Grade Distribution</h3>
+            <h3>Performance Distribution</h3>
             <div class="chart-container">
                 <canvas id="gradeChart"></canvas>
             </div>
         </div>
         <div class="card">
-            <h3>Subject Performance Overview</h3>
+            <h3>Performance Overview Per Grade</h3>
             <div class="chart-container">
                 <canvas id="barChart"></canvas>
             </div>
         </div>
     </section>
 
+    <!-- Bottom Section -->
     <section class="bottom">
+        <!-- Top 5 Students -->
         <div class="table-card card">
             <div class="card-header-custom">
-                <h3>Top Performing Students</h3>
-                <span class="badge-count" th:text="${results != null ? results.size() : 5}">5 Students</span>
+                <h3>Top 5 Performing Students</h3>
             </div>
             <table>
                 <thead>
@@ -88,99 +85,19 @@
                     <th style="padding-right: 24px;">Status</th>
                 </tr>
                 </thead>
-                <tbody>
-                <tr th:each="r : ${results}">
-                    <td style="padding-left: 24px;">
-                        <div class="d-flex align-items-center">
-                            <div class="avatar-sm me-3">JD</div>
-                            <span th:text="${r.name}">John Doe</span>
-                        </div>
-                    </td>
-                    <td th:text="${r.course}">Mathematics</td>
-                    <td><strong th:text="${r.grade}">85%</strong></td>
-                    <td style="padding-right: 24px;">
-                        <span th:class="${r.passed ? 'pass' : 'fail'}"
-                              th:text="${r.passed ? 'Distinction' : 'Failed'}">Pass</span>
-                    </td>
-                </tr>
-
-                <tr th:if="${results == null}">
-                    <td style="padding-left: 24px;">
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                            <div style="background: #e0e7ff; color: #4338ca; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: bold;">AS</div>
-                            <span>Aditi Sharma</span>
-                        </div>
-                    </td>
-                    <td>Physics</td>
-                    <td><strong>92%</strong></td>
-                    <td style="padding-right: 24px;"><span class="pass">Distinction</span></td>
-                </tr>
-                <tr th:if="${results == null}">
-                    <td style="padding-left: 24px;">
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                            <div style="background: #fef3c7; color: #92400e; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: bold;">BM</div>
-                            <span>Bongani Mtolo</span>
-                        </div>
-                    </td>
-                    <td>Life Sciences</td>
-                    <td><strong>78%</strong></td>
-                    <td style="padding-right: 24px;"><span class="pass">Pass</span></td>
-                </tr>
-                <tr th:if="${results == null}">
-                    <td style="padding-left: 24px;">
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                            <div style="background: #dcfce7; color: #166534; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: bold;">CK</div>
-                            <span>Charlize Kruger</span>
-                        </div>
-                    </td>
-                    <td>English HL</td>
-                    <td><strong>81%</strong></td>
-                    <td style="padding-right: 24px;"><span class="pass">Pass</span></td>
-                </tr>
-                <tr th:if="${results == null}">
-                    <td style="padding-left: 24px;">
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                            <div style="background: #fee2e2; color: #991b1b; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: bold;">DW</div>
-                            <span>David Williams</span>
-                        </div>
-                    </td>
-                    <td>Mathematics</td>
-                    <td><strong>34%</strong></td>
-                    <td style="padding-right: 24px;"><span class="fail">At Risk</span></td>
-                </tr>
-                </tbody>
+                <tbody id="top_5_table_data"></tbody>
             </table>
         </div>
 
+        <!-- Recent Activity -->
         <div class="activity card">
             <h3>Recent Activity</h3>
-            <ul>
-                <li>
-                    <i class="bi bi-person-check" style="color: #10b981;"></i>
-                    <div>
-                        <p><strong>Grade Update</strong></p>
-                        <small>Mr. Smith updated Math Term 1</small>
-                    </div>
-                </li>
-                <li>
-                    <i class="bi bi-exclamation-circle" style="color: #ef4444;"></i>
-                    <div>
-                        <p><strong>Low Performance Alert</strong></p>
-                        <small>12 students flagged in Science</small>
-                    </div>
-                </li>
-                <li>
-                    <i class="bi bi-file-earmark-pdf" style="color: #3b82f6;"></i>
-                    <div>
-                        <p><strong>Reports Ready</strong></p>
-                        <small>Grade 10 PDF reports generated</small>
-                    </div>
-                </li>
-            </ul>
+            <ul id="activity_list"></ul>
         </div>
     </section>
 </div>
 
+<!-- Scripts Fragment -->
 <th:block th:fragment="dashboard-scripts">
     <script th:src="@{/webjars/chart.js/4.5.1/dist/chart.umd.js}"></script>
     <script th:src="@{/scripts/dashboard.js}" th:inline="javascript"></script>

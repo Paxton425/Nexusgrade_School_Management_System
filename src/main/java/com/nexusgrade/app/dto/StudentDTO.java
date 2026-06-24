@@ -19,6 +19,7 @@ public class StudentDTO {
     private List<ResultDTO> results;
     private SchoolClassDTO schoolClassDTO;
 
+    public StudentDTO(){}
     public StudentDTO(Student student) {
         this.id = student.getId();
         this.firstName = student.getFirstName();
@@ -28,6 +29,14 @@ public class StudentDTO {
         this.status = student.getStatus();
         this.results = ResultDTO.toDTOList(student.getResults());
         this.schoolClassDTO = new SchoolClassDTO(student.getSchoolClass());
+    }
+
+    public static StudentDTO getEssentialsOnly(Student student){
+        StudentDTO dto = new StudentDTO();
+        dto.setId(student.getId());
+        dto.setFirstName(student.getFirstName());
+        dto.setLastName(student.getLastName());
+        return dto;
     }
 
     public UUID getId() {

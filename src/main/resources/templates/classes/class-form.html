@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{common/layout :: layout(~{::main}, ~{::link}, ~{::scripts})}">
+<head>
+    <meta charset="UTF-8">
+    <th:block th:fragment="link">
+        <script src="https://cdn.tailwindcss.com"></script>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    </th:block>
+</head>
+<body>
+
+<main class="container mx-auto my-10 p-5 text-gray-800">
+    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamatation-triangle-fill me-2"></i>
+        <span th:text="${error}">Error message here</span>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    <div class="mb-8">
+        <nav class="flex text-sm text-gray-500 mb-2">
+            <a th:href="@{/classes}" class="hover:text-blue-600">Classes</a>
+            <span class="mx-2">/</span>
+            <span class="text-gray-900 font-medium" th:text="${schoolClass.id == null ? 'Create Class' : 'Modify Class'}">Manage Class</span>
+        </nav>
+        <h1 class="text-3xl font-bold text-gray-900" th:text="${schoolClass.id == null ? 'Create New Class' : 'Modify Class: ' + schoolClass.title}">
+            Manage Class Stream
+        </h1>
+        <p class="text-gray-500 mt-1">Configure structural details and map multi-selection subject streams.</p>
+    </div>
+
+    <div class="max-w-3xl bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-100 bg-gray-50">
+            <h3 class="font-bold text-gray-900">Class Information</h3>
+        </div>
+
+        <form th:action="@{/classes/save}" th:object="${schoolClass}" method="POST" class="p-6 space-y-6">
+            <input type="hidden" th:field="*{id}" />
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="md:col-span-1">
+                    <label for="title" class="block text-sm font-medium text-gray-700 mb-2">Class Title</label>
+                    <input type="text" th:field="*{title}" id="title" required placeholder="e.g., 10-A"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition outline-none" />
+                </div>
+
+                <div>
+                    <label for="grade" class="block text-sm font-medium text-gray-700 mb-2">Grade Level</label>
+                    <input type="number" th:field="*{grade}" id="grade" required min="1" max="12" placeholder="e.g., 10"
+                           oninput="filterSubjectsByGrade()"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition outline-none" />
+                </div>
+
+                <div>
+                    <label for="classYear" class="block text-sm font-medium text-gray-700 mb-2">Academic Year</label>
+                    <input type="number" th:field="*{classYear}" id="classYear" required min="2020" max="2100" placeholder="2026"
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition outline-none" />
+                </div>
+            </div>
+
+            <hr class="border-gray-100" />
+
+            <div>
+                <label class="block text-sm font-semibold text-gray-900 mb-1">Subject Stream Mapping</label>
+                <p class="text-xs text-gray-500 mb-3">Only showing subjects available for the selected grade.</p>
+
+                <div id="subject-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 max-h-60 overflow-y-auto p-3 bg-gray-50 rounded-xl border border-gray-200">
+                    <div th:each="subj : ${allSubjects}"
+                         th:data-grade="${subj.grade}"
+                         class="subject-item flex items-center p-2 bg-white rounded-lg border border-gray-100 shadow-xs hover:bg-blue-50/50 transition">
+                        <input type="checkbox"
+                               th:field="*{subjects}"
+                               th:value="${subj.id}"
+                               th:id="${'subject-' + subj.id}"
+                               class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 transition cursor-pointer" />
+                        <label th:for="${'subject-' + subj.id}"
+                               th:text="${subj.name}"
+                               class="ml-3 text-sm font-medium text-gray-700 select-none cursor-pointer flex-1">
+                            Mathematics
+                        </label>
+                    </div>
+
+                    <div id="empty-subjects-msg" class="hidden col-span-full py-4 text-center text-sm text-gray-400 italic">
+                        No subjects assigned to this grade level.
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-end space-x-3 pt-4 border-t border-gray-100">
+                <a th:href="@{/classes}" class="px-5 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition font-medium shadow-sm">Cancel</a>
+                <button type="submit" class="px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium shadow-sm flex items-center">
+                    <i class="fas fa-save mr-2"></i> Commit Changes
+                </button>
+            </div>
+        </form>
+    </div>
+</main>
+
+<th:block th:fragment="scripts">
+    <script>
+        function filterSubjectsByGrade() {
+            const selectedGrade = document.getElementById('grade').value;
+            const subjectItems = document.querySelectorAll('.subject-item');
+            const emptyMsg = document.getElementById('empty-subjects-msg');
+            let found = false;
+
+            subjectItems.forEach(item => {
+                const itemGrade = item.getAttribute('data-grade');
+
+                // If grade field is empty, show all. If filled, match exactly.
+                if (!selectedGrade || itemGrade === selectedGrade) {
+                    item.classList.remove('hidden');
+                    found = true;
+                } else {
+                    item.classList.add('hidden');
+                    // Optional: Uncheck hidden subjects so they aren't accidentally saved
+                    // item.querySelector('input').checked = false;
+                }
+            });
+
+            if (!found && selectedGrade !== "") {
+                emptyMsg.classList.remove('hidden');
+            } else {
+                emptyMsg.classList.add('hidden');
+            }
+        }
+
+        // Run on page load for Edit mode
+        window.onload = filterSubjectsByGrade;
+    </script>
+</th:block>
+
+</body>
+</html>

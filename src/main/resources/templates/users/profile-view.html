@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      th:replace="~{common/layout :: layout(~{::main}, _, _)}">
+<head>
+    <title>My Profile | Nexus Portal</title>
+</head>
+<body>
+
+<main class="container-fluid py-4">
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <div>
+            <h1 class="h3 md-0 text-dark fw-bold">Personal Profile</h1>
+            <p class="text-muted mb-0">Manage your Nexus Portal identity credentials and assignments.</p>
+        </div>
+        <div>
+            <a th:href="@{/profile/edit}" class="btn btn-outline-primary d-flex align-items-center gap-2 fw-semibold shadow-sm px-4">
+                <i class="bi bi-pencil-square"></i> Edit Profile
+            </a>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-12 col-lg-4">
+            <div class="card border-0 shadow-sm text-center p-4 bg-white rounded-3">
+                <div class="position-relative d-inline-block mx-auto mb-3">
+                    <img th:src="${user.profileImage != null} ? @{${user.profileImage}} : @{/images/default-logo.png}"
+                         alt="Avatar"
+                         class="rounded-circle border border-4 border-light shadow-sm"
+                         style="width: 120px; height: 120px; object-fit: cover;"/>
+                </div>
+
+                <h4 class="fw-bold text-dark mb-1" th:text="${user.firstName + ' ' + (user.middleName != null ? user.middleName + ' ' : '') + user.lastName}">
+                    Sthandiwe Mthethwa
+                </h4>
+                <p class="text-muted small mb-3" th:text="'Employee ID: ' + ${user.employeeId}">EMP-0000</p>
+
+                <span class="badge bg-primary-subtle text-primary border border-primary-subtle fw-semibold rounded-pill mx-auto px-3 py-2"
+                      style="font-size: 0.85rem;"
+                      th:text="${#strings.capitalize(#strings.toLowerCase(user.role))}">
+                    Role
+                </span>
+
+                <hr class="my-4 text-light">
+
+                <div class="text-start fs-7">
+                    <div class="mb-3">
+                        <label class="text-muted d-block small uppercase fw-semibold tracking-wider">Username Reference</label>
+                        <span class="text-dark fw-medium" th:text="${user.username}">username</span>
+                    </div>
+                    <div class="mb-3">
+                        <label class="text-muted d-block small uppercase fw-semibold tracking-wider">Gender Context</label>
+                        <span class="text-dark fw-medium" th:text="${#strings.capitalize(#strings.toLowerCase(user.gender))}">Gender</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-lg-8">
+            <div class="card border-0 shadow-sm p-4 bg-white rounded-3 mb-4">
+                <h5 class="fw-bold text-dark mb-4"><i class="bi bi-person-lines-fill me-2 text-primary"></i>Contact Information</h5>
+                <div class="row g-3">
+                    <div class="col-12 col-md-6">
+                        <label class="form-label text-muted small fw-medium">Email Address</label>
+                        <div class="form-control-plaintext border-bottom pb-1 fw-semibold text-dark" th:text="${user.email}">user@nexusgrade.com</div>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label class="form-label text-muted small fw-medium">Phone Number</label>
+                        <div class="form-control-plaintext border-bottom pb-1 fw-semibold text-dark" th:text="${user.phone != null ? user.phone : 'Not Provided'}">012 345 6789</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm p-4 bg-white rounded-3 backend-conditional-block"
+                 th:if="${user.role.name() == 'INSTRUCTOR' and instructorDetails != null}">
+
+                <h5 class="fw-bold text-dark mb-4">
+                    <i class="bi bi-mortarboard-fill me-2 text-success"></i>Academic Employment Credentials
+                </h5>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-12 col-md-6">
+                        <label class="form-label text-muted small fw-medium">Academic Designation Title</label>
+                        <div class="form-control-plaintext border-bottom pb-1 fw-semibold text-dark"
+                             th:text="${#strings.replace(instructorDetails.title, '_', ' ')}">
+                            TEACHER
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <label class="form-label text-muted small fw-medium">Assigned Department</label>
+                        <div class="form-control-plaintext border-bottom pb-1 fw-semibold text-dark"
+                             th:text="${#strings.capitalize(#strings.toLowerCase(instructorDetails.department))}">
+                            SCIENCE
+                        </div>
+                    </div>
+                </div>
+
+                <h6 class="fw-bold text-secondary mb-3 small text-uppercase tracking-wide">Currently Assigned Classes</h6>
+
+                <div class="alert alert-light border text-muted py-3 px-3 rounded-3 mb-0"
+                     th:if="${#lists.isEmpty(assignedClasses)}">
+                    <i class="bi bi-exclamation-circle me-2"></i>No active class schedules mapped to this instructor profile.
+                </div>
+
+                <div class="row g-2" th:if="${not #lists.isEmpty(assignedClasses)}">
+                    <div class="col-12 col-sm-6 col-md-4" th:each="schoolClass : ${assignedClasses}">
+                        <div class="p-3 border rounded-3 bg-light d-flex align-items-center gap-2">
+                            <i class="bi bi-collection-play-fill text-primary"></i>
+                            <span class="fw-bold text-dark fs-7" th:text="${schoolClass.className}">Grade 10-A</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+</body>
+</html>

@@ -4,9 +4,11 @@ import com.nexusgrade.app.dto.*;
 import com.nexusgrade.app.dto.StudentReportDTO;
 import com.nexusgrade.app.dto.StudentReportDTO.TermResult;
 import com.nexusgrade.app.model.Result.*;
+import com.nexusgrade.app.model.Result.Term;
 import com.nexusgrade.app.model.*;
 import com.nexusgrade.app.model.Student;
 import com.nexusgrade.app.model.Subject;
+import com.nexusgrade.app.repository.ReportRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -16,62 +18,73 @@ import java.util.*;
 public class ReportService {
     @Autowired
     private GradingService gradingService;
+    ReportRepository reportRepository;
+    public ReportService(ReportRepository reportRepository){
+        this.reportRepository = reportRepository;
+    }
 
-    public StudentReportDTO generateReport(Student student) {
-        StudentReportDTO report = new StudentReportDTO();
-        report.setStudent(student);
-        double highestMark = 0.0;
-        double lowestMark = 100.0;
-        double overallTotal = 0.0;
-        double overallAverage = 0.0;
-        int marksCount = 0;
-        TreeMap<String, TreeMap<Term, TermResult>> results = new TreeMap<>();
-        HashMap<Term, Double> totalsPerTerm = new HashMap<>();
-        HashMap<Term, Double> averagePerTerm = new HashMap<>();
-        int subjectCount = student.getSchoolClass().getSubjects().size();
-
-        for (Subject subject : student.getSchoolClass().getSubjects()) {
-            TreeMap<Term, TermResult> termResults = new TreeMap<>();
-
-            for (Term term : Term.values()) {
-                Map<String, Number> termResult = gradingService.calculateTermResult(student.getResults(), subject, term);
-
-                termResults.put(
-                        term,
-                        new TermResult(
-                                termResult.get("results").doubleValue(),
-                                termResult.get("average").doubleValue(),
-                                termResult.get("level").intValue())
-                );
-
-                // Just do the running total here
-                totalsPerTerm.put(term, totalsPerTerm.getOrDefault(term, 0.0) + termResult.get("results").doubleValue());
-
-                // Global stats
-                highestMark = Math.max(highestMark, termResult.get("results").doubleValue());
-                lowestMark = Math.min(lowestMark, termResult.get("results").doubleValue());
-                overallTotal += termResult.get("results").doubleValue();
-                marksCount++;
+    public StudentReport generateNewReportTemplate(Student student)
+    throws RuntimeException{
+        try{
+            List<Subject> subjects = student.getSchoolClass().getSubjects();
+            StudentReport report = new StudentReport(null, 0.0, 0.0, 0.0, 0.0, student, null);
+            List<StudentTermReport> termReports = new ArrayList<>();
+            for(Term term: Term.values()){
+                for(Subject subject: subjects){
+                    termReports.add(new StudentTermReport(null, 0.0, 0.0, 1, subject, null, term));
+                }
             }
-            results.put(subject.getName(), termResults);
+            report.setTermResults(termReports);
+            return reportRepository.save(report);
+        } catch(Exception e){
+            e.printStackTrace();
+            throw new RuntimeException("Report Template Generation Failure");
         }
+    }
 
-        // NOW calculate averages after all totals are complete
-        for (Term term : Term.values()) {
-            double termTotal = totalsPerTerm.getOrDefault(term, 0.0);
-            averagePerTerm.put(term, subjectCount > 0 ? termTotal / subjectCount : 0.0);
+    public Map<Term, Double[]> getTermOveralls(StudentReport report) {
+        List<StudentTermReport> termResults = report.getTermResults();
+
+        // Default Values - Map<Term, [total, average]>
+        Map<Term, Double[]> termOveralls = new HashMap<>(Map.of(
+                Term.TERM_1, new Double[]{0.0, 0.0},
+                Term.TERM_2, new Double[]{0.0, 0.0},
+                Term.TERM_3, new Double[]{0.0, 0.0},
+                Term.TERM_4, new Double[]{0.0, 0.0}
+        ));
+
+        try {
+            if (termResults != null && !termResults.isEmpty()) {
+                // Step 1: Use an auxiliary map to count the number of subjects per term
+                Map<Term, Integer> subjectCounts = new HashMap<>();
+
+                // Step 2: Sum up the totals and track how many subjects are in each term
+                for (StudentTermReport tr : termResults) {
+                    Term currentTerm = tr.getTerm();
+
+                    if (currentTerm != null && termOveralls.containsKey(currentTerm)) {
+                        Double[] currentData = termOveralls.get(currentTerm);
+
+                        // Add the final grade to the current total sum
+                        currentData[0] += tr.getFinalGrade();
+                        // Increment the subject counter for this specific term
+                        subjectCounts.put(currentTerm, subjectCounts.getOrDefault(currentTerm, 0) + 1);
+                    }
+                }
+
+                // Step 3: Calculate the accurate mathematical average for each term
+                termOveralls.forEach((term, data) -> {
+                    int count = subjectCounts.getOrDefault(term, 0);
+                    if (count > 0) {
+                        data[1] = data[0] / count; // True overall average (Total / Number of Subjects)
+                    }
+                });
+            }
+
+            return termOveralls;
+
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to calculate term overall statistics", e);
         }
-
-        overallAverage = marksCount > 0 ? overallTotal / marksCount : 0.0;
-
-        report.setResults(results);
-        report.setTotalsPerTerm(totalsPerTerm);
-        report.setAveragePerTerm(averagePerTerm);
-        report.setOverallTotal(overallTotal);
-        report.setOverallAverage(overallAverage);
-        report.setHighestMark(highestMark);
-        report.setLowestMark(lowestMark);
-
-          return report;
     }
 }

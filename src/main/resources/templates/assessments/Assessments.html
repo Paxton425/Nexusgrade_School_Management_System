@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" th:replace="~{common/layout :: layout(~{::content}, ~{link}, ~{scripts})}">
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{common/layout :: layout(~{::content}, ~{::link}, ~{::scripts})}">
 <head>
     <meta charset="UTF-8">
     <title>Assessments</title>
@@ -26,25 +26,27 @@
     </div>
 
     <div class="actions mt-3 d-flex align-items-center gap-2">
-      <select class="form-select form-select-md" style="width: auto;">
-        <option selected>All Subjects</option>
-        <option>Mathematics</option>
-        <option>Physical Sciences</option>
+      <select id="filter-subject" class="form-select form-select-md" style="width: auto;">
+        <option value="">All Subjects</option>
+        <option th:selected="${selectedSubject == 'Mathematics'}">Mathematics</option>
+        <option th:selected="${selectedSubject == 'Physical Sciences'}">Physical Sciences</option>
       </select>
-      <select class="form-select form-select-md" style="width: auto;">
-        <option selected>All Types</option>
-        <option>SBA</option>
-        <option>PAT</option>
-        <option>EXAM</option>
+      <select id="filter-type" class="form-select form-select-md" style="width: auto;">
+        <option value="">All Types</option>
+        <option th:selected="${selectedType == 'SBA'}">SBA</option>
+        <option th:selected="${selectedType == 'PAT'}">PAT</option>
+        <option th:selected="${selectedType == 'EXAM'}">EXAM</option>
       </select>
-      <input type="text" class="form-control form-control-md" placeholder="Search by title..." style="width: 250px;">
+      <input type="text" id="filter-search" class="form-control form-control-md"
+             placeholder="Search by title..." style="width: 250px;" th:value="${searchQuery}">
+      <button class="btn btn-outline-secondary" onclick="applyFilters()"><i class="bi bi-funnel"></i> Filter</button>
     </div>
   </header>
 
-  <div class="table-card card mt-4">
+  <div class="table-card card mt-4 p-2">
     <div class="card-header-custom">
       <h3>Registered Assessments</h3>
-      <span class="badge-count" th:text="${assessments != null ? assessments.size() : 4}">4 Items</span>
+      <span class="badge-count" th:text="${totalItems + ' Items'}">4 Items</span>
     </div>
     <table>
       <thead>
@@ -92,7 +94,53 @@
       </tr>
       </tbody>
     </table>
+
+    <!-- NEW: Pagination Controls -->
+    <div class="card-footer bg-white d-flex justify-content-between align-items-center p-3">
+      <small class="text-muted">
+        Page <span th:text="${currentPage + 1}">1</span> of <span th:text="${totalPages}">1</span>
+      </small>
+      <nav th:if="${totalPages > 1}">
+        <ul class="pagination pagination-sm mb-0">
+          <li class="page-item" th:classappend="${currentPage == 0} ? 'disabled'">
+            <a class="page-link" th:href="@{/assessments(page=${currentPage - 1}, subject=${selectedSubject}, type=${selectedType}, search=${searchQuery})}">Previous</a>
+          </li>
+          <li class="page-item" th:each="i : ${#numbers.sequence(0, totalPages - 1)}"
+              th:classappend="${currentPage == i} ? 'active'">
+            <a class="page-link" th:href="@{/assessments(page=${i}, subject=${selectedSubject}, type=${selectedType}, search=${searchQuery})}" th:text="${i + 1}">1</a>
+          </li>
+          <li class="page-item" th:classappend="${currentPage == totalPages - 1} ? 'disabled'">
+            <a class="page-link" th:href="@{/assessments(page=${currentPage + 1}, subject=${selectedSubject}, type=${selectedType}, search=${searchQuery})}">Next</a>
+          </li>
+        </ul>
+      </nav>
+    </div>
   </div>
 </div>
 </body>
+<th:block th:fragment="scripts">
+  <script th:inline="javascript">
+    function applyFilters() {
+      const subject = $('#filter-subject').val();
+      const type = $('#filter-type').val();
+      const search = $('#filter-search').val();
+
+      let url = '/assessments?page=0'; // Reset to page 0 on new filter
+
+      if (subject) url += '&subject=' + encodeURIComponent(subject);
+      if (type) url += '&type=' + encodeURIComponent(type);
+      if (search) url += '&search=' + encodeURIComponent(search);
+
+      window.location.href = url;
+    }
+
+    // Trigger on Enter key in search box
+    $('#filter-search').on('keypress', function(e) {
+      if(e.which === 13) applyFilters();
+    });
+
+    // Auto-apply on dropdown change
+    $('#filter-subject, #filter-type').on('change', applyFilters);
+  </script>
+</th:block>
 </html>

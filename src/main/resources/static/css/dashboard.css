@@ -1,7 +1,6 @@
 /* Dashboard Main Wrapper */
 #dashboard-content {
     padding: 25px;
-    background: #f8fafc;
     color: #1e293b;
     min-height: 100%;    /* It will now only take up the remaining space of the parent */
     display: block;
@@ -79,11 +78,34 @@
 
 .kpi h2 { font-size: 32px; font-weight: 800; margin: 8px 0; color: #1e293b; }
 
+/* Animation */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+@keyframes slideUp {
+    from {
+        bottom: -10px;
+        opacity: 0.5;
+    }
+    to {
+        bottom: 0;
+        opacity: 1;
+    }
+}
+.kpi > small {
+    position: relative;
+    animation: slideUp 380ms ease-in forwards;
+}
+
+#performanceRadar{
+    animation: fadeIn 380ms ease-in forwards;
+}
+
 /* Color Highlights for KPIs */
-.kpi:nth-child(1) { border: 1px solid #3b82f6; border-top: 4px solid #3b82f6; } /* Blue: Total */
-.kpi:nth-child(2) { border: 1px solid #10b981; border-top: 4px solid #10b981; } /* Green: Avg */
-.kpi:nth-child(3) { border: 1px solid #f59e0b; border-top: 4px solid #f59e0b; } /* Yellow: Pass */
-.kpi:nth-child(4) { border: 1px solid #ef4444; border-top: 4px solid #ef4444; } /* Red: At Risk */
+.kpi { border-top: 2px solid #00588f;}
+.kpi:nth-child(3) { grid-row: span 2; }
+
 
 /* Update .grid to handle row heights better */
 .grid {
@@ -151,23 +173,42 @@
     font-size: 0.9rem;
 }
 
+/*Student Initials*/
+.initials{
+    background: #e0e7ff;
+    color: #4338ca;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    font-weight: bold;"
+}
+
 /* Status Labels */
-.pass {
-    background: #dcfce7;
-    color: #15803d;
+.status-labels {
     padding: 4px 10px;
     border-radius: 6px;
     font-size: 0.75rem;
     font-weight: 700;
 }
-
+.distinction {
+    background-color: #dcfce7;
+    color: #15803d;
+}
+.pass {
+    background-color: #dcfce7;
+    color: #50c10d;
+}
+.poor{
+    background-color: #fee2e2;
+    color: #f3bc00;
+}
 .fail {
-    background: #fee2e2;
+    background-color: #fee2e2;;
     color: #b91c1c;
-    padding: 4px 10px;
-    border-radius: 6px;
-    font-size: 0.75rem;
-    font-weight: 700;
 }
 
 /* Activity Icons */
@@ -202,6 +243,11 @@
 /* Activity Feed Overhaul */
 .activity.card {
     min-height: auto; /* Let content dictate height */
+}
+
+.activity-icon {
+    background-color: #c6c6c6;
+    border-radius: 2px;
 }
 
 .activity ul {

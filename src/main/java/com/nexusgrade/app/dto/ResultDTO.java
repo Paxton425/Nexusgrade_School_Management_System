@@ -21,7 +21,9 @@ public class ResultDTO {
 
     public ResultDTO(Result result){
         this.Id = result.getId();
+        this.score = result.getScore();
         this.assessment = new AssessmentDTO(result.getAssessment());
+        this.student = StudentDTO.getEssentialsOnly(result.getStudent()); //sets id & names only
         this.term = result.getTerm();
         this.createdAt = result.getCreatedAt();
         this.updatedAt = result.getUpdatedAt();

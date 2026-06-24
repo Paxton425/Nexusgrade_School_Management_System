@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      th:replace="~{common/layout :: layout(~{::main}, _, _)}">
+<head>
+    <title>Edit Profile | Nexus Portal</title>
+</head>
+<body>
+
+<main class="container-fluid py-4">
+    <div class="d-flex align-items-center justify-content-between mb-4">
+        <div>
+            <h1 class="h3 mb-0 text-dark fw-bold">Modify Profile Credentials</h1>
+            <p class="text-muted mb-0">Keep your contact channels and identity parameters accurate.</p>
+        </div>
+        <div>
+            <a th:href="@{/profile}" class="btn btn-outline-secondary fw-semibold px-4">
+                <i class="bi bi-arrow-left-short"></i> Back to Profile
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12 col-xl-8 mx-auto">
+            <div class="card border-0 shadow-sm p-4 bg-white rounded-3">
+
+                <form th:action="@{/profile/update}" th:object="${user}" method="post">
+
+                    <h5 class="fw-bold text-dark mb-4 border-bottom pb-2">
+                        <i class="bi bi-shield-lock-fill me-2 text-danger"></i>System Restrictions
+                    </h5>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-12 col-md-6">
+                            <label class="form-label text-secondary small fw-bold text-uppercase">Employee ID (Immutable)</label>
+                            <input type="text"
+                                   th:field="*{employeeId}"
+                                   class="form-control bg-light text-muted border-secondary-subtle fw-semibold"
+                                   readonly
+                                   tabindex="-1" />
+                            <div class="form-text text-muted small">System identities cannot be altered by portal owners.</div>
+                        </div>
+
+                        <div class="col-12 col-md-6">
+                            <label class="form-label text-secondary small fw-bold text-uppercase">Portal Account Username</label>
+                            <input type="text"
+                                   th:field="*{username}"
+                                   class="form-control bg-light text-muted border-secondary-subtle fw-semibold"
+                                   readonly
+                                   tabindex="-1" />
+                        </div>
+                    </div>
+
+                    <h5 class="fw-bold text-dark mb-4 border-bottom pb-2">
+                        <i class="bi bi-person-bounding-box me-2 text-primary"></i>Personal Identification Details
+                    </h5>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-12 col-md-4">
+                            <label class="form-label fw-semibold text-dark">First Name</label>
+                            <input type="text" th:field="*{firstName}" class="form-control" required />
+                        </div>
+                        <div class="col-12 col-md-4">
+                            <label class="form-label fw-semibold text-dark">Middle Name</label>
+                            <input type="text" th:field="*{middleName}" class="form-control" />
+                        </div>
+                        <div class="col-12 col-md-4">
+                            <label class="form-label fw-semibold text-dark">Last Name</label>
+                            <input type="text" th:field="*{lastName}" class="form-control" required />
+                        </div>
+                    </div>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-12 col-md-6">
+                            <label class="form-label fw-semibold text-dark">Gender Context</label>
+                            <select th:field="*{gender}" class="form-select" required>
+                                <option th:value="${T(com.nexusgrade.app.model.User.Gender).MALE}">Male</option>
+                                <option th:value="${T(com.nexusgrade.app.model.User.Gender).FEMALE}">Female</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <h5 class="fw-bold text-dark mb-4 border-bottom pb-2">
+                        <i class="bi bi-envelope-at-fill me-2 text-success"></i>Communication Channels
+                    </h5>
+
+                    <div class="row g-3 mb-4">
+                        <div class="col-12 col-md-6">
+                            <label class="form-label fw-semibold text-dark">Email Address</label>
+                            <input type="email" th:field="*{email}" class="form-control" required />
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <label class="form-label fw-semibold text-dark">Phone Number</label>
+                            <input type="tel" th:field="*{phone}" class="form-control" placeholder="e.g., 012 345 6789" />
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2 border-top pt-3 mt-4">
+                        <a th:href="@{/profile}" class="btn btn-light border fw-semibold px-4">Cancel Modifications</a>
+                        <button type="submit" class="btn btn-primary fw-semibold px-5 shadow-sm">Save Changes</button>
+                    </div>
+
+                </form>
+
+            </div>
+        </div>
+    </div>
+</main>
+
+</body>
+</html>

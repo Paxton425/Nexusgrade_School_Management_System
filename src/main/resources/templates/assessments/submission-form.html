@@ -70,7 +70,7 @@
                         <div class="col-md-6">
                             <label class="form-label fw-bold">3. Term</label>
                             <select th:field="*{term}" class="form-select form-select-lg">
-                                <option th:each="t : ${T(com.example.springbootmvcdemo.model.Result.Term).values()}"
+                                <option th:each="t : ${terms}"
                                         th:value="${t}" th:text="${t}">TERM_1</option>
                             </select>
                         </div>

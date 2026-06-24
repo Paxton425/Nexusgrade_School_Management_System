@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{common/layout :: layout(~{::main}, ~{::link}, ~{::scripts})}">
+<head>
+    <th:block th:fragment="link">
+        <script src="https://cdn.tailwindcss.com"></script>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    </th:block>
+</head>
+<body>
+
+<main class="container mx-auto my-8 p-6">
+    <div>
+        <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i>
+            <span th:text="${success}">Success message here</span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    </div>
+
+    <div class="flex justify-between items-start mb-6">
+        <div>
+            <nav class="flex text-gray-500 text-sm mb-2">
+                <a th:href="@{/subjects}" class="hover:text-blue-600">Subjects</a>
+                <span class="mx-2">/</span>
+                <span class="text-gray-900 font-semibold" th:text="${subject.subjectCode}">MATH10</span>
+            </nav>
+            <h1 class="text-4xl font-extrabold text-gray-900" th:text="${subject.name}">Mathematics</h1>
+            <p class="text-gray-500" th:text="${subject.department + ' Department • Grade ' + subject.grade}">SCIENCE Department • Grade 10</p>
+        </div>
+        <div class="flex gap-3">
+            <button class="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 transition flex items-center">
+                <i class="fas fa-file-export mr-2"></i> Export Report
+            </button>
+            <a th:href="@{/subjects/edit/{id}(id=${subject.id})}" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition flex items-center shadow-lg shadow-blue-200">
+                <i class="fas fa-edit mr-2"></i> Edit Subject
+            </a>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        <div class="lg:col-span-1 grid grid-cols-1 gap-4">
+            <div class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
+                <p class="text-sm text-gray-400 uppercase font-bold tracking-wider">Average Performance</p>
+                <h2 class="text-3xl font-black text-blue-600 mt-2">68.4%</h2>
+                <p class="text-xs text-green-500 mt-1"><i class="fas fa-caret-up"></i> 2.1% from last term</p>
+            </div>
+            <div class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
+                <p class="text-sm text-gray-400 uppercase font-bold tracking-wider">Pass Rate</p>
+                <h2 class="text-3xl font-black text-emerald-500 mt-2">82%</h2>
+                <div class="w-full bg-gray-100 h-2 rounded-full mt-3">
+                    <div class="bg-emerald-500 h-2 rounded-full" style="width: 82%"></div>
+                </div>
+            </div>
+            <div class="bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
+                <p class="text-sm text-gray-400 uppercase font-bold tracking-wider">SBA vs Exam Weight</p>
+                <div class="flex justify-between mt-4">
+                    <div class="text-center">
+                        <span class="block text-xs text-gray-400">SBA</span>
+                        <span class="font-bold text-gray-700" th:text="${#numbers.formatPercent(subject.sbaWeight, 1, 0)}">25%</span>
+                    </div>
+                    <div class="text-center border-l border-gray-100 pl-4">
+                        <span class="block text-xs text-gray-400">Exam</span>
+                        <span class="font-bold text-gray-700" th:text="${#numbers.formatPercent(subject.examWeight, 1, 0)}">75%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="lg:col-span-2 bg-white p-6 rounded-xl border border-gray-100 shadow-sm">
+            <h3 class="font-bold text-gray-800 mb-4 flex items-center">
+                <i class="fas fa-chart-line mr-2 text-blue-500"></i> Performance Distribution
+            </h3>
+            <div class="relative h-[300px] w-full">
+                <canvas id="performanceChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 xl:grid-cols-2 gap-8">
+
+        <div class="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+            <div class="px-6 py-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
+                <h3 class="font-bold text-gray-800">Assigned Classes</h3>
+                <span class="bg-blue-100 text-blue-700 text-xs font-bold px-2 py-1 rounded" th:text="${#lists.size(subject.schoolClasses)} + ' Classes'">3 Classes</span>
+            </div>
+            <ul class="divide-y divide-gray-100">
+                <li th:each="sClass : ${subject.schoolClasses}" class="px-6 py-4 hover:bg-gray-50 flex justify-between items-center transition">
+                    <div>
+                        <p class="font-bold text-gray-900" th:text="${sClass.title}">10-A (Mathematics)</p>
+                        <p class="text-xs text-gray-400" th:text="${sClass.students.size() + ' Enrolled Students'}">30 Students</p>
+                    </div>
+                    <a th:href="@{/classes/view/{id}(id=${sClass.id})}" class="text-blue-500 hover:underline text-sm font-semibold">View Class</a>
+                </li>
+            </ul>
+        </div>
+
+        <div class="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
+            <div class="px-6 py-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
+                <h3 class="font-bold text-gray-800">Assessments List</h3>
+                <a href="#" class="text-xs text-blue-600 font-bold hover:underline">+ New Assessment</a>
+            </div>
+            <div class="p-0">
+                <table class="w-full text-left text-sm">
+                    <thead class="bg-gray-100 text-gray-500 uppercase text-xs">
+                    <tr>
+                        <th class="px-6 py-3 font-bold">Task Name</th>
+                        <th class="px-6 py-3 font-bold">Total</th>
+                        <th class="px-6 py-3 font-bold text-center">Avg</th>
+                    </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                    <tr th:each="assessment : ${subject.assessments}" class="hover:bg-gray-50">
+                        <td class="px-6 py-4">
+                            <p class="font-semibold text-gray-800" th:text="${assessment.name}">Term 1 Test</p>
+                            <span class="text-[10px] bg-gray-200 text-gray-600 px-1.5 py-0.5 rounded font-bold uppercase" th:text="${assessment.type}">TEST</span>
+                        </td>
+                        <td class="px-6 py-4 text-gray-500" th:text="${assessment.totalMarks + ' marks'}">50 marks</td>
+                        <td class="px-6 py-4 text-center font-bold text-blue-600">--%</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</main>
+
+<th:block th:fragment="scripts">
+    <script>
+        const ctx = document.getElementById('performanceChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['Level 1 (0-29%)', 'Level 2 (30-39%)', 'Level 3 (40-49%)', 'Level 4 (50-59%)', 'Level 5 (60-69%)', 'Level 6 (70-79%)', 'Level 7 (80-100%)'],
+                datasets: [{
+                    label: 'Number of Students',
+                    data: [2, 5, 12, 25, 18, 10, 8], // DUMMY DATA
+                    backgroundColor: '#3b82f6',
+                    borderRadius: 6,
+                    borderSkipped: false,
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    y: { beginAtZero: true, grid: { display: false } },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+    </script>
+</th:block>
+
+</body>
+</html>
