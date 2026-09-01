@@ -1,6 +1,5 @@
 package com.nexusgrade.app.dto;
 
-import com.nexusgrade.app.model.Result;
 import com.nexusgrade.app.model.Term;
 import com.nexusgrade.app.model.*;
 import com.nexusgrade.app.model.Student;

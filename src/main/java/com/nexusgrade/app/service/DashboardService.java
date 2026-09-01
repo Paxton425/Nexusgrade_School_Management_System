@@ -1,7 +1,9 @@
 package com.nexusgrade.app.service;
 
 import com.nexusgrade.app.dto.ActivityLogDTO;
-import com.nexusgrade.app.dto.ResultDTO;
+import com.nexusgrade.app.dto.AssessmentScoreDTO;
+import com.nexusgrade.app.dto.MarkDTO;
+import com.nexusgrade.app.dto.StatsDTO;
 import com.nexusgrade.app.event.EntityUpdatedEvent;
 import com.nexusgrade.app.model.*;
 import com.nexusgrade.app.repository.*;
@@ -29,14 +31,15 @@ public class DashboardService {
     @Autowired
     StatisticsService statisticsService;
 
-    StudentRepository studentRepository;
-    InstructorRepository instructorRepository;
-    AssessmentRepository assessmentRepository;
-    ResultRepository resultRepository;
-    ActivityLogRepository activityLogRepository;
-    SubjectRepository subjectRepository;
-    StatsRepository statsRepository;
-    AcademicCalendarRepository calendarRepository;
+    private StudentRepository studentRepository;
+    private InstructorRepository instructorRepository;
+    private AssessmentRepository assessmentRepository;
+    private AssessmentScoreRepository assessmentScoreRepository;
+    private ActivityLogRepository activityLogRepository;
+    private SubjectRepository subjectRepository;
+    private StatsRepository statsRepository;
+    private AcademicCalendarRepository calendarRepository;
+    private AssessmentMarkRepository assessmentMarkRepository;
 
     // Standard single-threaded scheduler for managing the in-memory debounce delays
     private final ScheduledExecutorService debounceScheduler = Executors.newSingleThreadScheduledExecutor();
@@ -45,7 +48,8 @@ public class DashboardService {
     DashboardService(StudentRepository studentRepository,
                      InstructorRepository instructorRepository,
                      AssessmentRepository assessmentRepository,
-                     ResultRepository resultRepository,
+                     AssessmentScoreRepository assessmentScoreRepository,
+                     AssessmentMarkRepository assessmentMarkRepository,
                      ActivityLogRepository activityLogRepository,
                      SubjectRepository subjectRepository,
                      StatsRepository statsRepository,
@@ -53,7 +57,8 @@ public class DashboardService {
         this.studentRepository = studentRepository;
         this.instructorRepository = instructorRepository;
         this.assessmentRepository = assessmentRepository;
-        this.resultRepository = resultRepository;
+        this.assessmentMarkRepository = assessmentMarkRepository;
+        this.assessmentScoreRepository = assessmentScoreRepository;
         this.activityLogRepository = activityLogRepository;
         this.subjectRepository = subjectRepository;
         this.statsRepository = statsRepository;
@@ -114,9 +119,7 @@ public class DashboardService {
             freshData.put("performanceDistribution", performanceDistribution);
 
             // High-speed Top 5 directly leveraging SQL LIMIT
-            List<ResultDTO> topFive = resultRepository.findTop5ByOrderByScoreDesc()
-                    .stream().map(ResultDTO::new).collect(Collectors.toList());
-            freshData.put("topFiveStudents", topFive);
+            freshData.put("topFiveStudents", getTop5Performers());
 
             // Recent activities
             freshData.put("activityLogs", getRecentActivities());
@@ -124,9 +127,14 @@ public class DashboardService {
             // Swap the cache reference instantly with zero downtime
             this.cachedDashboardData = freshData;
         } catch(Exception e){
-            logger.error("Dashboard Cache Generation Failure!");
+            logger.error("\nDashboard Cache Generation Failure!");
             e.printStackTrace();
         }
+
+    }
+    private List<MarkDTO> getTop5Performers(){
+        return assessmentMarkRepository.findTop5ByOrderByScoreDesc().stream()
+                .map(MarkDTO::new).collect(Collectors.toList());
     }
 
     private Map<String, Stats> getStats(Term term){
@@ -137,14 +145,14 @@ public class DashboardService {
                 .orElseGet(Stats::new);
 
         return Map.of(
-                "prevTermSats", prevTermStats,
-                "currTermStats", currentTermStats
+                "prevTermSats", currentTermStats,
+                "currTermStats", prevTermStats
         );
     }
 
     public Map<Integer, Double> getAveragesPerGrade() {
-        List<Object[]> dataRows = resultRepository.getAverageMarkPerGrade();
-        Map<Integer, Double> results = new TreeMap<>();
+        List<Object[]> dataRows = assessmentScoreRepository.getAverageMarkPerGrade();
+        Map<Integer, Double> scores = new TreeMap<>();
 
         for (Object[] row : dataRows) {
             if (row != null && row.length >= 2) {
@@ -152,18 +160,18 @@ public class DashboardService {
 
                 // Safe conversion handling both Double and BigDecimal database outputs
                 Double average = row[3] instanceof Number ? ((Number) row[3]).doubleValue() : 0.0;
-                results.put(grade, average);
+                scores.put(grade, average);
             }
         }
-        return results;
+        return scores;
     }
 
     public Map<String, Number[]> getTermAveragesPerGrade() {
         try{
-            List<Object[]> dataRows = resultRepository.getTermAveragesPerGrade(Term.TERM_2.toString(), Term.TERM_1.toString());
-            Map<String, Number[]> results = new TreeMap<>(); // TreeMap automatic sorting
+            List<Object[]> dataRows = assessmentScoreRepository.getTermAveragesPerGrade(Term.TERM_2.toString(), Term.TERM_1.toString());
+            Map<String, Number[]> scores = new TreeMap<>(); // TreeMap automatic sorting
             Integer[] grades = new Integer[dataRows.size()/2];
-            results.put("Grades", grades);
+            scores.put("Grades", grades);
             int gradesIndex = 0;
 
             for (Object[] row : dataRows) {
@@ -177,23 +185,23 @@ public class DashboardService {
                             .toString();
                     Number average = row[2] instanceof Number ? ((Number) row[2]) : 0.0;
 
-                    if(!results.isEmpty() && results.containsKey(term)){
-                        Number[] averages = results.get(term);
+                    if(!scores.isEmpty() && scores.containsKey(term)){
+                        Number[] averages = scores.get(term);
                         for(int i=0; i<averages.length; i++)
                             if(averages[i] == null){
                                 averages[i] = average;
                                 break;
                             }
-                        results.put(term, averages);
+                        scores.put(term, averages);
                     }
                     else {
                         Number[] newAverages = new Number[dataRows.size()/2];
                         newAverages[0] = average;
-                        results.put(term, newAverages);
+                        scores.put(term, newAverages);
                     }
                 }
             }
-            return results;
+            return scores;
         } catch (Exception e) {
             e.printStackTrace();
             throw new RuntimeException(e);
@@ -204,7 +212,7 @@ public class DashboardService {
     public Map<String, Double> getPerformanceDistribution(){
         try{
 
-            Map<String, Object> performanceDist = resultRepository.getPerformanceLevelDistribution();
+            Map<String, Object> performanceDist = assessmentScoreRepository.getPerformanceLevelDistribution();
 
             Number poorCount = (Number) performanceDist.get("poor");
             Number badCount = (Number) performanceDist.get("bad");
@@ -229,7 +237,7 @@ public class DashboardService {
 
     public Map<String, Map<String, Map<String, Object>>> getSubjectPerformances(int grade){
         try{
-            List<Object[]> rawResults = resultRepository.findSubjectPerformanceByTermsAndGrade(List.of("TERM_2", "TERM_1"), 10);
+            List<Object[]> rawResults = assessmentScoreRepository.findSubjectPerformanceByTermsAndGrade(List.of("TERM_2", "TERM_1"), 10);
 
             Map<String, Map<String, Map<String, Object>>> finalResult = new LinkedHashMap<>();
 
@@ -250,7 +258,8 @@ public class DashboardService {
 
             return finalResult;
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            e.printStackTrace();
+            return null;
         }
     }
 

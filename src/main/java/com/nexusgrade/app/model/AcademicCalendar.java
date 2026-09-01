@@ -1,6 +1,7 @@
 package com.nexusgrade.app.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 
 import java.time.LocalDate;
@@ -8,6 +9,7 @@ import java.util.List;
 
 @Entity
 @Table(name = "academic_calendar")
+@JsonIgnoreProperties({"assessmentScores", "stats"})
 public class AcademicCalendar {
 
     @Id
@@ -30,11 +32,13 @@ public class AcademicCalendar {
     @Column(name = "term_end_date")
     private LocalDate termEndDate;
 
-    @OneToMany(mappedBy = "academicCalendar")
+    @OneToMany(mappedBy = "academicCalendar", fetch = FetchType.LAZY)
+    @JsonIgnoreProperties("academicCalendar")
     @JsonIgnore
-    private List<Result> result;
+    private List<AssessmentScore> assessmentScores;
 
     @OneToMany(mappedBy = "academicCalendar")
+    @JsonIgnoreProperties("academicCalendar")
     @JsonIgnore
     private List<Stats> stats;
 
@@ -73,12 +77,12 @@ public class AcademicCalendar {
     public LocalDate getTermEndDate() { return termEndDate; }
     public void setTermEndDate(LocalDate termEndDate) { this.termEndDate = termEndDate; }
 
-    public List<Result> getResult() {
-        return result;
+    public List<AssessmentScore> getAssessmentScores() {
+        return assessmentScores;
     }
 
-    public void setResult(List<Result> result) {
-        this.result = result;
+    public void setAssessmentScores(List<AssessmentScore> assessmentScores) {
+        this.assessmentScores = assessmentScores;
     }
 
     public List<Stats> getStats() {

@@ -1,8 +1,5 @@
 package com.nexusgrade.app.controller;
 
-import com.nexusgrade.app.dto.ResultDTO;
-import com.nexusgrade.app.model.ActivityLog;
-import com.nexusgrade.app.model.Result;
 import com.nexusgrade.app.repository.StudentRepository;
 import com.nexusgrade.app.repository.InstructorRepository;
 import com.nexusgrade.app.service.DashboardService;

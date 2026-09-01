@@ -19,7 +19,7 @@ public class StatisticsService {
     @Autowired
     InstructorRepository instructorRepository;
     @Autowired
-    ResultRepository resultRepository;
+    AssessmentScoreRepository assessmentScoreRepository;
     @Autowired
     AcademicCalendarRepository calendarRepository;
     @Autowired
@@ -58,7 +58,7 @@ public class StatisticsService {
         return null;
     }
     private Double calculateOverallAverage(){
-        return resultRepository.getOverallAverageMark();
+        return assessmentScoreRepository.getOverallAverageMark();
     }
     private Double calculateAttendanceRate(){
         return null;

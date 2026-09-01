@@ -2,7 +2,7 @@ package com.nexusgrade.app.service;
 
 import com.nexusgrade.app.model.*;
 import com.nexusgrade.app.model.Assessment;
-import com.nexusgrade.app.model.Result;
+import com.nexusgrade.app.model.AssessmentScore;
 import com.nexusgrade.app.model.Term;
 import com.nexusgrade.app.model.Student;
 import com.nexusgrade.app.model.Subject;
@@ -13,41 +13,41 @@ import java.util.Map;
 
 @Service
 public class GradingService {
-    public double calculateMaxGrade(List<Result> grades){
-        double max = grades.stream()
+    public double calculateMaxGrade(List<AssessmentScore> scores){
+        double max = scores.stream()
                 .filter(a -> a.getAssessment().getType() == Assessment.AssessmentType.SBA)
                 .mapToDouble(s -> computeMark(s.getScore(),s.getAssessment().getMaxPoints()))
                 .max().orElse(0.0);
         return max;
     }
-    public double calculateMinGrade(List<Result> grades){
-        double min = grades.stream()
+    public double calculateMinGrade(List<AssessmentScore> scores){
+        double min = scores.stream()
                 .filter(g -> g.getAssessment().getType() == Assessment.AssessmentType.SBA)
                 .mapToDouble(s -> computeMark(s.getScore(),s.getAssessment().getMaxPoints()))
                 .min().orElse(0.0);
         return min;
     }
-    public double calculateTermAverage(List<Result> grades, Term term){
-        double average = grades.stream()
+    public double calculateTermAverage(List<AssessmentScore> scores, Term term){
+        double average = scores.stream()
                 .filter(g -> g.getAssessment().getType() == Assessment.AssessmentType.SBA && g.getAcademicCalendar().getCurrentTerm().equals(term))
                 .mapToDouble(s -> computeMark(s.getScore(),s.getAssessment().getMaxPoints()))
                 .average().orElse(0.0);
         return  average;
     }
-    public double calculateResultsAverage(List<Result> results){
-        double average = results.stream()
+    public double calculateAssessmentScoresAverage(List<AssessmentScore> scores){
+        double average = scores.stream()
                 .filter(g -> g.getAssessment().getType() == Assessment.AssessmentType.SBA)
                 .mapToDouble(s -> computeMark(s.getScore(), s.getAssessment().getMaxPoints()))
                 .average().orElse(0.0);
         return  average;
     }
-    public double calculateFinalMark(List<Result> grades, Subject subject, Term term) {
-        double sba = grades.stream()
+    public double calculateFinalMark(List<AssessmentScore> scores, Subject subject, Term term) {
+        double sba = scores.stream()
                 .filter(g -> g.getAssessment().getType().equals(Assessment.AssessmentType.SBA) && g.getAssessment().getSubject().equals(subject) && g.getAcademicCalendar().getCurrentTerm().equals(term))
                 .mapToDouble(s -> computeMark(s.getScore(),s.getAssessment().getMaxPoints()))
                 .average().orElse(0.0);
 
-        double exam = grades.stream()
+        double exam = scores.stream()
                 .filter(g -> g.getAssessment().getType() == Assessment.AssessmentType.EXAM && g.getAcademicCalendar().getCurrentTerm().equals(term))
                 .mapToDouble(s -> computeMark(s.getScore(),s.getAssessment().getMaxPoints()))
                 .findFirst().orElse(0.0);
@@ -56,15 +56,15 @@ public class GradingService {
         return (sba * 0.25) + (exam * 0.75);
     }
 
-    public Map<String, Number> calculateTermResult(List<Result> grades, Subject subject, Term term) {
-        List<Result> filteredResults = grades.stream()
+    public Map<String, Number> calculateTermAssessmentScore(List<AssessmentScore> scores, Subject subject, Term term) {
+        List<AssessmentScore> filteredAssessmentScores = scores.stream()
                 .filter(g -> g.getAssessment().getType().equals(Assessment.AssessmentType.SBA)
                         && g.getAssessment().getSubject().equals(subject)
                         && g.getAcademicCalendar().getCurrentTerm().equals(term))
                 .toList();
 
-        double results = computeFinal(filteredResults);
-        double average = filteredResults.stream().mapToDouble(s -> computeMark(s.getScore(), s.getAssessment().getMaxPoints()))
+        double results = computeFinal(filteredAssessmentScores);
+        double average = filteredAssessmentScores.stream().mapToDouble(s -> computeMark(s.getScore(), s.getAssessment().getMaxPoints()))
                 .average().orElse(0.0);
         int level = calculateLevel(results);
 
@@ -75,12 +75,12 @@ public class GradingService {
                 );
     }
 
-    private double computeFinal(List<Result> filteredResults){
-        double sba = filteredResults.stream()
+    private double computeFinal(List<AssessmentScore> filteredAssessmentScores){
+        double sba = filteredAssessmentScores.stream()
                 .mapToDouble(s -> computeMark(s.getScore(),s.getAssessment().getMaxPoints()))
                 .average().orElse(0.0);
 
-        double exam = filteredResults.stream()
+        double exam = filteredAssessmentScores.stream()
                 .mapToDouble(s -> computeMark(s.getScore(),s.getAssessment().getMaxPoints()))
                 .findFirst().orElse(0.0);
 
@@ -89,15 +89,15 @@ public class GradingService {
     }
 
     public boolean hasPassedTerm(Student student, Term term) {
-        List<Result> grades = student.getResults();
+        List<AssessmentScore> scores = student.getAssessmentScores();
         List<Subject> sutudentSubjects = student.getSchoolClass().getSubjects();
         long passCount = 0;
 
-        if (grades == null || grades.isEmpty()) {
+        if (scores == null || scores.isEmpty()) {
             return false;
         }
         for(Subject subject : sutudentSubjects) {
-            double finalMark = calculateFinalMark(grades, subject, term);
+            double finalMark = calculateFinalMark(scores, subject, term);
             // In SA schooling (FET), a mark below 30% (Level 1) is a fail for that subject
             if (finalMark < 30.0) {
                 passCount++;

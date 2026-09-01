@@ -330,27 +330,30 @@ function insertActivities(data) {
 
 function insertTopFive(data) {
     const topFive = data['topFiveStudents'];
+    console.log("Top five", topFive);
     const topFiveTableData = document.querySelector('#top_5_table_data');
     let achievementStatus = 'pass';
 
     topFive.forEach((result) => {
-        if (result['score'] > 90) achievementStatus = 'distinction';
-        else if (result['score'] > 50) achievementStatus = 'pass';
-        else if (result['score'] > 40) achievementStatus = 'poor';
+        if (result['mark'] > 90) achievementStatus = 'distinction';
+        else if (result['mark'] > 50) achievementStatus = 'pass';
+        else if (result['mark'] > 40) achievementStatus = 'poor';
         else achievementStatus = 'fail';
+        const student = result['scoreDTO']['student'];
+        const hexColor = student['color'].replace(/.*(#([0-9a-fA-F]{3,6})).*/, "$1");
 
         const html_row = `
             <tr>
                 <td style="padding-left: 24px;">
                     <div class="d-flex align-items-center">
-                        <div class="initials avatar-sm me-3">
-                            ${(result['student']['firstName'].charAt(0) + result['student']['lastName'].charAt(0)).toUpperCase()}
+                        <div class="initials avatar-sm me-3" style="background-color: ${hexColor}">
+                            ${(student['firstName'].charAt(0) + student['lastName'].charAt(0)).toUpperCase()}
                         </div>
-                        <span>${result['student']['firstName']} ${result['student']['lastName']}</span>
+                        <span>${student['firstName']} ${student['lastName']}</span>
                     </div>
                 </td>
-                <td>${result['assessment']['subject']['name']}</td>
-                <td><strong>${result['score']}%</strong></td>
+                <td>${result['scoreDTO']['assessment']['subject']['name']}</td>
+                <td><strong>${result['mark']}%</strong></td>
                 <td style="padding-right: 24px;">
                     <span class="status-labels ${achievementStatus}">
                         ${achievementStatus}
@@ -394,6 +397,7 @@ function animateValue(el, start, end, duration, suffix = '') {
 // ==================== MAIN DATA FETCH ====================
 
 const baseUrl = window.location.origin;
+
 
 fetch(`${baseUrl}/dashboard/data`)
     .then(response => {

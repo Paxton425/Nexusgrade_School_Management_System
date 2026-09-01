@@ -2,7 +2,6 @@ package com.nexusgrade.app.controller;
 
 import com.nexusgrade.app.model.Report;
 import com.nexusgrade.app.model.Term;
-import com.nexusgrade.app.model.Result;
 import com.nexusgrade.app.model.Student;
 import com.nexusgrade.app.repository.ReportRepository;
 import com.nexusgrade.app.repository.StudentRepository;

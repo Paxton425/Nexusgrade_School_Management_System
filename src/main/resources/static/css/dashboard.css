@@ -174,7 +174,7 @@
     font-size: 0.9rem;
 }
 
-/*Student Initials*/
+/*Student Initials Default */
 .initials{
     background: #e0e7ff;
     color: #4338ca;
@@ -265,7 +265,7 @@
     border-bottom: none;
 }
 
-/* Modernizing the Table */
+/* Table */
 .table-card table {
     width: 100%;
     border-collapse: collapse;

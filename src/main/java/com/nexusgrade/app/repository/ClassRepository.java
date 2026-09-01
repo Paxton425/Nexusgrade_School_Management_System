@@ -16,6 +16,7 @@ public interface ClassRepository extends JpaRepository<SchoolClass, Long> {
     Page<SchoolClass> findByGradeAndTitleContainingIgnoreCase(Integer gradeFilter, String searchValue, Pageable pageable);
     List<SchoolClass> findAllByAssessmentsContaining(Assessment assessment);
     List<SchoolClass> findAllByGrade(Integer grade);
+
     @Query("SELECT COUNT(st) FROM Student st WHERE st.schoolClass.id =:classId")
-    Integer getClassStudentCount(@Param("clasId") Long classId);
+    Integer getClassStudentCount(@Param("classId") Long classId);
 }

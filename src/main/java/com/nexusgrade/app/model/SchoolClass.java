@@ -30,7 +30,8 @@ public class SchoolClass {
             inverseJoinColumns = @JoinColumn(name = "subject_id")
     )
     private List<Subject> subjects;
-    @ManyToOne
+    @OneToOne(cascade = CascadeType.DETACH)
+    @JoinColumn(name = "class_time_table_id", referencedColumnName = "id")
     TimeTable classTimeTable;
     @ManyToMany(mappedBy = "schoolClasses")
     private List<Assessment> assessments;

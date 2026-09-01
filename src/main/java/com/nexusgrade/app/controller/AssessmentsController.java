@@ -4,7 +4,6 @@ import com.nexusgrade.app.annotation.LogActivity;
 import com.nexusgrade.app.dto.SchoolClassDTO;
 import com.nexusgrade.app.dto.SubmissionStats;
 import com.nexusgrade.app.model.*;
-import com.nexusgrade.app.model.*;
 import com.nexusgrade.app.repository.*;
 import com.nexusgrade.app.service.AssessmentService;
 import com.nexusgrade.app.service.ReportService;
@@ -23,7 +22,6 @@ import tools.jackson.databind.ObjectMapper;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 @Controller
 @RequestMapping(path = "/assessments", method = RequestMethod.GET)
@@ -35,19 +33,19 @@ public class AssessmentsController {
 
     private AssessmentRepository assessmentRepository;
     private SubjectRepository subjectRepository;
-    private ResultRepository resultRepository;
+    private AssessmentScoreRepository assessmentScoreRepository;
     private StudentRepository studentRepository;
     private ClassRepository classRepository;
     private AcademicCalendarRepository calendarRepository;
     AssessmentsController(AssessmentRepository assessmentRepository,
                           SubjectRepository subjectRepository,
-                          ResultRepository resultRepository,
+                          AssessmentScoreRepository assessmentScoreRepository,
                           StudentRepository studentRepository,
                           ClassRepository classRepository,
                           AcademicCalendarRepository calendarRepository){
         this.assessmentRepository = assessmentRepository;
         this.subjectRepository = subjectRepository;
-        this.resultRepository = resultRepository;
+        this.assessmentScoreRepository = assessmentScoreRepository;
         this.subjectRepository = subjectRepository;
         this.classRepository = classRepository;
         this.calendarRepository = calendarRepository;
@@ -97,7 +95,7 @@ public class AssessmentsController {
                 .calculateTimeProgress(assessment.getAssignmentIssueDate(),
                         assessment.getAssignmentDeadline());
 
-        List<Result> submissions = resultRepository.findByAssessment(assessment);
+        List<AssessmentScore> submissions = assessmentScoreRepository.findByAssessment(assessment);
         List<SchoolClass> assignedClasses = assessment.getSchoolClasses();
         long totalEnrolled = 0;
         for(SchoolClass sClass: assignedClasses)
@@ -106,7 +104,7 @@ public class AssessmentsController {
         SubmissionStats stats = new SubmissionStats(
                 totalEnrolled,
                 submissions.size(),
-                submissions.stream().mapToInt(Result::getScore).average().orElse(0.0),
+                submissions.stream().mapToInt(AssessmentScore::getScore).average().orElse(0.0),
                 assessment.getMaxPoints(),
                 submissions.stream().filter(r -> r.getScore() >= (assessment.getMaxPoints() * 0.5)).count()
         );
@@ -127,7 +125,7 @@ public class AssessmentsController {
         Assessment assessment = assessmentRepository.findById(assessmentId)
                 .orElseThrow(() -> new EntityNotFoundException("Assessment not found"));
 
-        List<Result> submissions = resultRepository.findByAssessment(assessment);
+        List<AssessmentScore> submissions = assessmentScoreRepository.findByAssessment(assessment);
         List<SchoolClass> assignedClasses = assessment.getSchoolClasses();
 
         long totalEnrolled = 0;
@@ -137,7 +135,7 @@ public class AssessmentsController {
 
         // Ensure we don't divide by zero if no students are enrolled
         double averageScore = submissions.stream()
-                .mapToInt(Result::getScore)
+                .mapToInt(AssessmentScore::getScore)
                 .average()
                 .orElse(0.0);
 
@@ -240,36 +238,36 @@ public class AssessmentsController {
             for(Student student: sClass.getStudents())
                 enrolledStudents.add(student);
 
-        Result result = new Result();
+        AssessmentScore score = new AssessmentScore();
         List<AcademicCalendar> currentYearCalendars = calendarRepository.findAllByAcademicYear(LocalDate.now().getYear());
-        result.setAssessment(assessment); // Pre-link the assessment
+        score.setAssessment(assessment); // Pre-link the assessment
 
         model.addAttribute("assessment", assessment);
         model.addAttribute("enrolledStudents", enrolledStudents);
-        model.addAttribute("result", result);
+        model.addAttribute("score", score);
         model.addAttribute("calenders", currentYearCalendars);
 
         return "assessments/submission-form";
     }
 
     @LogActivity(action = "updated assessment marks", entityType = "RESULT")
-    @PostMapping("/results/save")
-    public String saveResult(@ModelAttribute Result result, RedirectAttributes ra) {
+    @PostMapping("/scores/save")
+    public String saveAssessmentScore(@ModelAttribute AssessmentScore score, RedirectAttributes ra) {
         // Basic validation to ensure they didn't Exceed the HTML max attribute
-        if (result.getScore() > result.getAssessment().getMaxPoints()) {
+        if (score.getScore() > score.getAssessment().getMaxPoints()) {
             ra.addFlashAttribute("message", "Score cannot exceed maximum points!");
             ra.addFlashAttribute("alertClass", "alert-danger");
-            return "redirect:/assessments/record/" + result.getAssessment().getId();
+            return "redirect:/assessments/record/" + score.getAssessment().getId();
         }
 
-        Result savedResults = resultRepository.save(result);
+        AssessmentScore savedAssessmentScores = assessmentScoreRepository.save(score);
 
-        reportService.refreshStudentReport(savedResults.getStudent()); //Refresh report after marks updates
+        reportService.refreshStudentReport(savedAssessmentScores.getStudent()); //Refresh report after marks updates
 
         ra.addFlashAttribute("message", "Mark recorded for student successfully!");
         ra.addFlashAttribute("alertClass", "alert-success");
 
-        // Redirect back to the assessment list or a "view results" page
-        return "redirect:/assessments/assessment/"+result.getAssessment().getId();
+        // Redirect back to the assessment list or a "view scores" page
+        return "redirect:/assessments/assessment/"+score.getAssessment().getId();
     }
 }

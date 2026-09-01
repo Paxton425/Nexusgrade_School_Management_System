@@ -1,15 +1,12 @@
 package com.nexusgrade.app.controller;
 
 import com.nexusgrade.app.annotation.LogActivity;
-import com.nexusgrade.app.model.AcademicCalendar;
-import com.nexusgrade.app.model.SchoolClass;
-import com.nexusgrade.app.model.Subject;
-import com.nexusgrade.app.model.TimeTable;
+import com.nexusgrade.app.model.*;
 import com.nexusgrade.app.repository.*;
+import com.nexusgrade.app.service.AcademicCalendarService;
 import com.nexusgrade.app.service.AttendanceService;
 import com.nexusgrade.app.service.TimeTableService;
 import jakarta.persistence.EntityNotFoundException;
-import com.nexusgrade.app.service.TimeTableService.TimeSlot;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,23 +30,26 @@ public class SchoolClassController {
     AttendanceService attendanceService;
     @Autowired
     TimeTableService timeTableService;
+    @Autowired
+    AcademicCalendarService calendarService;
+
     private ClassRepository classRepository;
     private SubjectRepository subjectRepository;
     private TimeTableRepository timeTableRepository;
-    private ResultRepository resultRepository;
+    private AssessmentScoreRepository assessmentScoreRepository;
     private AcademicCalendarRepository calendarRepository;
     private StatsRepository statsRepository;
 
     Logger logger = LoggerFactory.getLogger(StudentController.class);
 
-    SchoolClassController(ResultRepository resultRepository,
+    SchoolClassController(AssessmentScoreRepository assessmentScoreRepository,
                           SubjectRepository subjectRepository,
                           ClassRepository classRepository,
                           AcademicCalendarRepository calendarRepository,
                           StatsRepository statsRepository,
                           TimeTableRepository timeTableRepository){
         this.classRepository = classRepository;
-        this.resultRepository = resultRepository;
+        this.assessmentScoreRepository = assessmentScoreRepository;
         this.subjectRepository = subjectRepository;
         this.calendarRepository = calendarRepository;
         this.statsRepository = statsRepository;
@@ -162,32 +162,44 @@ public class SchoolClassController {
     public String viewClassTimetable(@PathVariable Long classId, Model model) {
 
         SchoolClass schoolClass = classRepository.findById(classId)
-                .orElseThrow(()-> new EntityNotFoundException("Class not found for ID: "+classId));
-        TimeTable timeTable = schoolClass.getClassTimeTable();
+                .orElseThrow(() -> new EntityNotFoundException("Class not found for ID: " + classId));
 
-        // Class Info
-        String classTeacherName = schoolClass.getClassTeacher().getUser().getTitle().getLabel()+" "+schoolClass.getClassTeacher().getUser().getLastName();
-        AcademicCalendar calendar = calendarRepository.getAcademicCalendarByAcademicYear(schoolClass.getClassYear());
-        model.addAttribute("className", "Grade "+schoolClass.getGrade()+"-"+schoolClass.getTitle());
+        TimeTable timeTable = schoolClass.getClassTimeTable();
+        UUID timeTableId = (timeTable != null) ? timeTable.getId() : null;
+
+        // 1. Fetch time slots first
+        List<String> timeSlots = timeTableService.getTimeSlots(timeTableId);
+        List<String> days = timeTableService.getDays();
+
+        // 2. Build aligned matrix map
+        Map<String, List<TimeTableService.TimeSlot>> timetable = timeTableService.buildTimeTable(timeTable, timeSlots);
+
+        // 3. Class Teacher Info (Null-safe)
+        String classTeacherName = "Unassigned";
+        if (schoolClass.getClassTeacher() != null && schoolClass.getClassTeacher().getUser() != null) {
+            User user = schoolClass.getClassTeacher().getUser();
+            String title = (user.getTitle() != null) ? user.getTitle().getLabel() : "";
+            classTeacherName = (title + " " + user.getLastName()).trim();
+        }
+
+        // 4. Academic Calendar
+        AcademicCalendar calendar = calendarService.getCurrentTermsCalender();
+        String currentTerm = (calendar != null) ? calendar.getCurrentTerm().toString() : "Term 1";
+
+        // 5. Populate Model
+        model.addAttribute("className", "Grade " + schoolClass.getGrade() + "-" + schoolClass.getTitle());
         model.addAttribute("academicYear", schoolClass.getClassYear());
-        model.addAttribute("Current Term", calendar.getCurrentTerm());
+        model.addAttribute("semester", currentTerm);
         model.addAttribute("classTeacher", classTeacherName);
         model.addAttribute("totalStudents", classRepository.getClassStudentCount(classId));
-        model.addAttribute("roomNumber", "Class Room "+schoolClass.getTitle()+"-"+schoolClass.getGrade());
+        model.addAttribute("roomNumber", "Class Room " + schoolClass.getGrade() + "-" + schoolClass.getTitle());
 
-        // Build Timetable Data
-        Map<String, List<TimeSlot>> timetable = timeTableService.buildTimeTable(timeTable);
+        model.addAttribute("days", days);
+        model.addAttribute("timeSlots", timeSlots);
         model.addAttribute("timetable", timetable);
 
-        // Days of the week for header
-        List<String> days = timeTableService.getDays();
-        model.addAttribute("days", days);
-
-        List<String> timeSlots = timeTableService.getTimeSlots();
-        model.addAttribute("timeSlots", timeSlots);
-
         // Statistics
-        Map<String, Integer> stats = timeTableService.getStats(timeTable.getId());
+        Map<String, Integer> stats = timeTableService.getStats(timeTableId);
         model.addAttribute("totalPeriods", stats.get("totalPeriods"));
         model.addAttribute("subjectsCount", stats.get("subjectsCount"));
 

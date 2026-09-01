@@ -17,7 +17,7 @@
     </th:block>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght=300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
     <th:block th:if="${style != null}">
         <th:block th:replace="${style} ?: _"></th:block>
@@ -102,70 +102,116 @@
         </div>
     </div>
     <div class="main-section">
+        <!-- ============================================================ -->
+        <!--  FIXED TOP BAR  -->
+        <!-- ============================================================ -->
         <div class="navbar">
             <nav class="navbar-container navbar-expand-lg bg-white w-full">
                 <div class="container-fluid d-flex align-items-center justify-content-between">
-                    <nav style="--bs-breadcrumb-divider: '>';" aria-label="breadcrumb">
-                        <ol class="breadcrumb mb-0" id="breadcrumb-container">
-                            <li class="breadcrumb-item"><a th:href="@{/}">Home</a></li>
+
+                    <!-- LEFT: Breadcrumbs -->
+                    <nav class="breadcrumbs" aria-label="Breadcrumb">
+                        <ol id="breadcrumb-container" class="breadcrumb-modern">
+                            <!-- Populated by JS -->
                         </ol>
                     </nav>
 
-                    <div class="dropdown h-100">
-                        <div class="profile-widget d-flex align-items-center gap-3 bg-light px-3 py-2 rounded-pill border" th:if="${currentUser != null}">
-                            <div class="text-end d-none d-sm-block">
-                                <p class="mb-0 fw-bold text-dark lh-sm"
-                                   style="font-size: 0.9rem;"
-                                   th:text="${currentUser.firstName + ' ' + currentUser.lastName}">
-                                    Username
-                                </p>
+                    <!-- RIGHT: User + Actions -->
+                    <div class="topbar-actions d-flex align-items-center gap-2">
 
-                                <span class="badge bg-primary-subtle text-primary border border-primary-subtle fw-semibold rounded-pill float-start"
-                                      style="font-size: 0.72rem; padding: 0.2em 0.6em;"
-                                      th:text="${#strings.capitalize(#strings.toLowerCase(currentUser.role))}">
-                                Role
-                            </span>
+                        <!-- Help button -->
+                        <button class="topbar-btn d-none d-md-flex" title="Help">
+                            <i class="bi bi-question-circle"></i>
+                        </button>
+
+                        <button class="topbar-btn d-none d-md-flex" title="Messages">
+                            <i class="bi bi-envelope"></i>
+                        </button>
+
+                        <!-- Notifications -->
+                        <a class="btn topbar-btn position-relative" th:href="@{/notifications}" title="Notifications">
+                            <i class="bi bi-bell"></i>
+                            <span class="notification-dot"></span>
+                        </a>
+
+                        <!-- Divider -->
+                        <span class="topbar-divider d-none d-sm-block"></span>
+
+                        <!-- Profile Dropdown -->
+                        <div class="dropdown profile-dropdown">
+                            <div class="profile-widget d-flex align-items-center gap-3 px-3 py-2 rounded-pill"
+                                 th:if="${currentUser != null}">
+                                <div class="text-end d-none d-sm-block">
+                                    <p class="mb-0 fw-semibold text-dark lh-sm"
+                                       style="font-size: 0.9rem;"
+                                       th:text="${currentUser.firstName + ' ' + currentUser.lastName}">
+                                        Username
+                                    </p>
+                                    <span class="badge role-badge rounded-pill"
+                                          th:text="${#strings.capitalize(#strings.toLowerCase(currentUser.role))}">
+                                        Role
+                                    </span>
+                                </div>
+                                <div class="avatar-wrapper">
+                                    <img th:src="@{/images/default-logo.png}"
+                                         alt="Profile"
+                                         class="avatar-image"/>
+                                </div>
                             </div>
-                            <img th:src="@{/images/default-logo.png}"
-                                 alt="Profile Image"
-                                 class="rounded-circle border border-2 border-white shadow-sm"
-                                 style="width: 38px; height: 38px; object-fit: cover;"/>
+
+                            <!-- Dropdown Menu -->
+                            <div class="dropdown-menu dropdown-menu-end shadow-lg border-0 rounded-3 p-2">
+                                <a th:href="@{/profile}" class="dropdown-item d-flex align-items-center gap-3 rounded-2">
+                                    <i class="bi bi-person-circle fs-5 text-primary"></i>
+                                    <span>My Profile</span>
+                                </a>
+                                <hr class="dropdown-divider my-1">
+                                <a type="button" class="dropdown-item d-flex align-items-center gap-3 rounded-2 text-danger"
+                                   data-bs-toggle="modal" data-bs-target="#logOutModal">
+                                    <i class="bi bi-box-arrow-right fs-5"></i>
+                                    <span>Sign Out</span>
+                                </a>
+                            </div>
                         </div>
-                        <div class="dropdown-content">
-                            <a th:href="@{/profile}" >My Profile <i class="bi bi-person-circle fs-5 text-primary float-end"></i></a>
-                            <a type="button" data-bs-toggle="modal" data-bs-target="#logOutModal">Sign Out <i class="fa-solid fa-right-from-bracket fs-5 ms-1 text-danger float-end"></i></a>
-                        </div>
-                        <!-- Modal -->
-                        <div class="modal fade" id="logOutModal" tabindex="-1" aria-labelledby="logOutModalLabel" aria-hidden="true">
-                            <div class="modal-dialog">
-                                <div class="modal-content">
-                                    <div class="modal-header">
-                                        <h1 class="modal-title fs-5" id="logOutModalLabel">Warning</h1>
-                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                    </div>
-                                    <div class="modal-body">
-                                        Terminate Login Session?
-                                    </div>
-                                    <div class="modal-footer">
-                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                                            Cancel <i class="fa-solid fa-ban"></i>
-                                        </button>
-                                        <button id="logout-btn" class="btn btn-danger">
-                                            Sign Out <i class="fa-solid fa-right-from-bracket ms-1"></i>
-                                        </button>
-                                    </div>
+                    </div>
+
+                    <!-- Logout Modal -->
+                    <div class="modal fade" id="logOutModal" tabindex="-1" aria-labelledby="logOutModalLabel" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content border-0 shadow-lg rounded-4">
+                                <div class="modal-header border-0 pb-0">
+                                    <h5 class="modal-title fw-bold" id="logOutModalLabel">
+                                        <i class="bi bi-exclamation-triangle-fill text-warning me-2"></i>
+                                        Confirm Sign Out
+                                    </h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body pt-2">
+                                    <p class="text-secondary mb-0">Are you sure you want to end your current session?</p>
+                                </div>
+                                <div class="modal-footer border-0 pt-0">
+                                    <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">
+                                        Cancel
+                                    </button>
+                                    <button id="logout-btn" class="btn btn-danger rounded-pill px-4">
+                                        <i class="bi bi-box-arrow-right me-1"></i> Sign Out
+                                    </button>
                                 </div>
                             </div>
                         </div>
                     </div>
+
                 </div>
             </nav>
         </div>
+
         <main class="main-content">
             <th:block th:insert="${content}"></th:block>
         </main>
     </div>
 </div>
+
+<!-- Scripts -->
 <script th:src="@{/webjars/jquery/4.0.0/jquery.js}"></script>
 <script th:src="@{/webjars/bootstrap/5.3.8/js/bootstrap.bundle.min.js}"></script>
 <script th:src="@{/webjars/datatables/2.3.7/js/dataTables.js}"></script>
@@ -173,66 +219,73 @@
 <script type="text/javascript">
     $(document).ready(() => {
         const logoutButton = document.getElementById("logout-btn");
-        function buildBreadCrumbs(){
-            const domain = window.location.host;
+
+        function buildBreadCrumbs() {
             const path = window.location.pathname;
             const pathArray = path.split('/').filter(p => p);
             const $container = $('#breadcrumb-container');
 
+            // Home is always first
+            $container.append(`
+                <li class="breadcrumb-item">
+                    <a href="/dashboard">
+                        <i class="bi bi-house-door-fill"></i> Home
+                    </a>
+                </li>
+            `);
+
             let currentPath = '';
-            console.log("domain: "+domain);
 
             pathArray.forEach((segment, index) => {
-                currentPath += `${segment}`;
-                console.log(segment)
-
-                const displayName = segment.charAt(0).toUpperCase() + segment.slice(1);
+                currentPath += `/${segment}`;
+                const displayName = segment.replace(/-/g, ' ').replace(/(^\w|\s\w)/g, m => m.toUpperCase());
 
                 if (index === pathArray.length - 1) {
-                    $container.append(`<li class="breadcrumb-item active" aria-current="page">${displayName}</li>`);
+                    $container.append(`
+                        <li class="breadcrumb-item active" aria-current="page">
+                            <span>${displayName}</span>
+                        </li>
+                    `);
                 } else {
-                    $container.append(`<li class="breadcrumb-item"><a href="${domain+currentPath}">${displayName}</a></li>`);
+                    $container.append(`
+                        <li class="breadcrumb-item">
+                            <a href="${currentPath}">${displayName}</a>
+                        </li>
+                    `);
                 }
             });
-
-            console.log("Breadcrumbs generated for: " + path);
         }
 
         buildBreadCrumbs();
 
         const handleSecureLogout = (e) => {
             e.target.disabled = true;
-            // 1. Extract the active CSRF token details generated by Spring Security
             const csrfToken = /*[[${_csrf.token}]]*/ '';
             const csrfHeader = /*[[${_csrf.headerName}]]*/ 'X-CSRF-TOKEN';
-
-            // 2. Build the server routing target path securely
             const logoutUrl = /*[[@{/logout}]]*/ '/logout';
 
-            // 3. Execute an asynchronous POST request to your AuthController mapping
             fetch(logoutUrl, {
                 method: 'POST',
                 headers: {
-                    // Attach the dynamic token so Spring accepts the request boundary
                     [csrfHeader]: csrfToken
                 }
             })
                 .then(response => {
                     if (response.redirected) {
-                        // If the controller issues a 'redirect:/login?logout=true', follow it
                         window.location.href = response.url;
                     } else {
-                        // Fallback redirect if your controller returns a standard HTTP status body instead
                         window.location.href = '/login?logout=true';
                     }
                 })
                 .catch(error => {
-                    console.error('Logout script execution encountered a fault:', error);
-                    // Emergency fallback safety redirect
+                    console.error('Logout error:', error);
                     window.location.href = '/login?error=true';
                 });
+        };
+
+        if (logoutButton) {
+            logoutButton.addEventListener("click", handleSecureLogout);
         }
-        logoutButton.addEventListener("click", handleSecureLogout);
     });
 </script>
 <th:block th:if="${scripts != null}">

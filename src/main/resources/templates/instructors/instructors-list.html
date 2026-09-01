@@ -39,17 +39,17 @@
                             <div class="d-flex align-items-center">
                                 <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-3"
                                      style="width: 40px; height: 40px; min-width: 40px; font-weight: bold;"
-                                     th:text="${#strings.substring(instructor.firstName,0,1) + #strings.substring(instructor.lastName,0,1)}">
+                                     th:text="${#strings.substring(instructor.getUser().firstName,0,1) + #strings.substring(instructor.user.lastName,0,1)}">
                                     JS
                                 </div>
                                 <div>
-                                    <div class="fw-bold text-dark mb-0" th:text="${instructor.firstName + ' ' + instructor.lastName}">John Smith</div>
-                                    <small class="text-muted" th:text="${instructor.email}">email@school.com</small>
+                                    <div class="fw-bold text-dark mb-0" th:text="${instructor.user.firstName + ' ' + instructor.user.lastName}">John Smith</div>
+                                    <small class="text-muted" th:text="${instructor.user.email}">email@school.com</small>
                                 </div>
                             </div>
                         </td>
                         <td>
-                            <span class="badge bg-light text-dark border" th:text="${instructor.role}">Teacher</span>
+                            <span class="badge bg-light text-dark border" th:text="${instructor.user.role}">Teacher</span>
                         </td>
                         <td>
                             <span class="text-secondary" th:text="${instructor.department}">Science</span>

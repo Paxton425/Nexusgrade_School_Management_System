@@ -1,0 +1,32 @@
+# application-dev.yml - This file is ONLY loaded when dev profile is active
+
+spring:
+  # You can override any spring settings here for dev
+  thymeleaf:
+    cache: false  # Always disable cache in dev
+
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+
+# Dev-specific properties
+dev:
+  auto-login:
+    enabled: true
+
+# Dev logging
+logging:
+  level:
+    com.nexusgrade: DEBUG
+    org.springframework.security: DEBUG
+    org.springframework.web: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+
+# Optional: Dev-specific server settings
+server:
+  port: 8080
+  servlet:
+    session:
+      timeout: 30m  # Longer sessions for development

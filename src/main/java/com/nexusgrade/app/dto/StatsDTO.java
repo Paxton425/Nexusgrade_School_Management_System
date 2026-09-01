@@ -43,12 +43,14 @@ public class StatsDTO {
     public StatsDTO() {}
 
     public StatsDTO(Stats stats) {
-        this.id = id;
-        this.studentCount = stats.getStudentCount();;
-        this.instructorCount = stats.getInstructorCount();
-        this.attendanceRate = stats.getAttendanceRate();
-        this.passRate = stats.getPassRate();
-        this.academicCalendar = stats.getAcademicCalendar();
+        if(stats != null){
+            this.id = stats.getId();
+            this.studentCount = stats.getStudentCount();;
+            this.instructorCount = stats.getInstructorCount();
+            this.attendanceRate = stats.getAttendanceRate();
+            this.passRate = stats.getPassRate();
+            this.academicCalendar = stats.getAcademicCalendar();
+        }
     }
 
     public StatsDTO(Long id, Integer studentCount, Integer instructorCount, Double attendanceRate, Double passRate, AcademicCalendar academicCalendar) {

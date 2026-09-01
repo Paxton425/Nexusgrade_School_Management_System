@@ -1,5 +1,6 @@
 package com.nexusgrade.app.dto;
-import com.nexusgrade.app.model.Result;
+import com.nexusgrade.app.model.AssessmentScore;
+import com.nexusgrade.app.model.Color;
 import com.nexusgrade.app.model.Student;
 import com.nexusgrade.app.model.Student.Status;
 import com.nexusgrade.app.model.Student.Gender;
@@ -12,11 +13,12 @@ public class StudentDTO {
     private UUID id;
     private String firstName;
     private String lastName;
+    private Color color;
     private Gender gender;
     private Status status;
     private LocalDate birthDay;
     private List<SubjectDTO> subjects;
-    private List<ResultDTO> results;
+    private List<AssessmentScoreDTO> scores;
     private SchoolClassDTO schoolClassDTO;
 
     public StudentDTO(){}
@@ -27,7 +29,7 @@ public class StudentDTO {
         this.gender = student.getGender();
         this.birthDay = student.getBirthDay();
         this.status = student.getStatus();
-        this.results = ResultDTO.toDTOList(student.getResults());
+        this.scores = AssessmentScoreDTO.toDTOList(student.getAssessmentScores());
         this.schoolClassDTO = new SchoolClassDTO(student.getSchoolClass());
     }
 
@@ -36,6 +38,7 @@ public class StudentDTO {
         dto.setId(student.getId());
         dto.setFirstName(student.getFirstName());
         dto.setLastName(student.getLastName());
+        dto.setColor(student.getColor());
         return dto;
     }
 
@@ -61,6 +64,14 @@ public class StudentDTO {
 
     public void setLastName(String lastName) {
         this.lastName = lastName;
+    }
+
+    public Color getColor() {
+        return color;
+    }
+
+    public void setColor(Color color) {
+        this.color = color;
     }
 
     public Status getStatus() {
@@ -99,12 +110,12 @@ public class StudentDTO {
         return subjects;
     }
 
-    public List<ResultDTO> getResults() {
-        return results;
+    public List<AssessmentScoreDTO> getAssessmentScores() {
+        return scores;
     }
 
-    public void setResults(List<Result> results) {
-        this.results = ResultDTO.toDTOList(results);
+    public void setAssessmentScores(List<AssessmentScore> scores) {
+        this.scores = AssessmentScoreDTO.toDTOList(scores);
     }
 
     public void setSubjects(List<SubjectDTO> enrollmentSubjects) {

@@ -26,7 +26,7 @@ public class InstructorController {
         this.instructorRepository = instructorRepository;
     }
 
-    @RequestMapping(method = RequestMethod.GET)
+    @GetMapping
     public  String getAllInstructors(Model model){
         List<Instructor> instructors = instructorRepository.findAll();
         model.addAttribute("instructors", instructors);

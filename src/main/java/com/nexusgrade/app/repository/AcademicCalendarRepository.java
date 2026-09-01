@@ -15,5 +15,5 @@ public interface AcademicCalendarRepository extends JpaRepository<AcademicCalend
     @Query("SELECT t FROM AcademicCalendar t WHERE t.isActive = true")
     Optional<AcademicCalendar> findCurrentTermsCalender();
 
-    AcademicCalendar getAcademicCalendarByAcademicYear(int academicYear);
+    List<AcademicCalendar> findCalendarsByAcademicYear(int academicYear);
 }

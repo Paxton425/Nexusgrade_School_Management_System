@@ -3,7 +3,7 @@ package com.nexusgrade.app.controller;
 import com.nexusgrade.app.annotation.LogActivity;
 import com.nexusgrade.app.model.Department;
 import com.nexusgrade.app.model.Subject;
-import com.nexusgrade.app.repository.ResultRepository;
+import com.nexusgrade.app.repository.AssessmentScoreRepository;
 import com.nexusgrade.app.repository.SubjectRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.slf4j.Logger;
@@ -12,7 +12,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -24,11 +23,11 @@ public class SubjectController {
 
     Logger logger = LoggerFactory.getLogger(SubjectController.class);
     private SubjectRepository subjectRepository;
-    private ResultRepository resultRepository;
+    private AssessmentScoreRepository assessmentScoreRepository;
 
-    SubjectController(ResultRepository resultRepository,
+    SubjectController(AssessmentScoreRepository assessmentScoreRepository,
                       SubjectRepository subjectRepository){
-        this.resultRepository = resultRepository;
+        this.assessmentScoreRepository = assessmentScoreRepository;
         this.subjectRepository = subjectRepository;
     }
 

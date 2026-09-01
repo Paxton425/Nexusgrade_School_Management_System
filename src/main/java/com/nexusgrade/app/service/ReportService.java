@@ -72,8 +72,8 @@ public class ReportService {
            for(Term term: Term.values()){
 
                for(Subject subject: subjects){
-                   double finalMark = gradingService.calculateFinalMark(student.getResults(), subject, term);
-                   double average = gradingService.calculateTermAverage(student.getResults(), term);
+                   double finalMark = gradingService.calculateFinalMark(student.getAssessmentScores(), subject, term);
+                   double average = gradingService.calculateTermAverage(student.getAssessmentScores(), term);
                    int gradeLevel = gradingService.calculateLevel(finalMark);
 
                    termReports.add(new TermReport(

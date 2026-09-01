@@ -1,7 +1,6 @@
 package com.nexusgrade.app.dto;
 
 import com.nexusgrade.app.model.AcademicCalendar;
-import com.nexusgrade.app.model.Result;
 import com.nexusgrade.app.model.Term;
 import jakarta.persistence.Column;
 import jakarta.persistence.EnumType;
