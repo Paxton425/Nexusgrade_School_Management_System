@@ -7,16 +7,21 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Repository
 public interface TimeTableRepository extends JpaRepository<TimeTable, UUID> {
-    TimeTable findFirstBySchoolClass(List<SchoolClass> schoolClass);
+    Optional<TimeTable> findBySchoolClass(SchoolClass schoolClass);
 
-    @Query("SELECT COUNT(tt.timeTablePeriods) FROM TimeTable tt WHERE tt.id = :timeTableId")
+    @Query("SELECT SIZE(tt.timeTablePeriods) FROM TimeTable tt WHERE tt.id = :timeTableId")
     Integer getTotalTimetablePeriods(@Param("timeTableId") UUID timeTableId);
 
-    @Query("SELECT COUNT(DISTINCT tp.subject) FROM TimeTablePeriod tp WHERE tp.classTimeTable.id=:timeTableId")
+    @Query("SELECT COUNT(DISTINCT ttp.subject) FROM TimeTablePeriod ttp WHERE ttp.classTimeTable.id=:timeTableId")
     Integer getTimeTableSubjectsCount(@Param("timeTableId") UUID timeTableId);
+
+    @Query("SELECT ttp.startTime, ttp.endTime FROM TimeTablePeriod ttp WHERE ttp.classTimeTable.id = :timeTableId")
+    List<Object[]> getTimeSlots(@Param("timeTableId") UUID timeTableId);
 }

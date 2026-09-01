@@ -2,6 +2,8 @@ server:
   forward-headers-strategy: framework
 
 spring:
+  profiles:
+    active: ${ACTIVE_PROFILE}
   application:
     name: NexusGrade
 

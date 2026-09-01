@@ -14,8 +14,8 @@ public class TimeTable {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     UUID id;
-    @OneToMany(mappedBy = "classTimeTable")
-    List<SchoolClass> schoolClass;
+    @OneToOne(mappedBy = "classTimeTable")
+    SchoolClass schoolClass;
     @OneToMany(mappedBy = "classTimeTable")
     List<TimeTablePeriod> timeTablePeriods;
     @CreationTimestamp
@@ -33,11 +33,11 @@ public class TimeTable {
         this.id = id;
     }
 
-    public List<SchoolClass> getSchoolClass() {
+    public SchoolClass getSchoolClass() {
         return schoolClass;
     }
 
-    public void setSchoolClass(List<SchoolClass> schoolClass) {
+    public void setSchoolClass(SchoolClass schoolClass) {
         this.schoolClass = schoolClass;
     }
 

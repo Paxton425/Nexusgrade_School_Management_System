@@ -1,6 +1,8 @@
 package com.nexusgrade.app.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 import jakarta.persistence.*;
 import org.springframework.format.annotation.DateTimeFormat;
 
@@ -19,12 +21,17 @@ public class Student {
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private Status status;
+    @Column(name = "student_code", unique = true, nullable = false)
+    private String studentCode;
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private Gender gender;
     @Column(nullable = false)
     @DateTimeFormat(pattern = "yyyy-MM-dd")
     private LocalDate birthDay;
+    @Enumerated(EnumType.STRING)
+    @Nonnull
+    private Color color;
     @ManyToOne
     @JsonIgnoreProperties("student")
     private SchoolClass schoolClass;
@@ -36,7 +43,7 @@ public class Student {
     @OneToMany(mappedBy = "student")
     private List<ClassAttendance> classAttendances;
 
-    public enum Status {INACTIVE, ACTIVE, COMPLETED}
+    public enum Status { INACTIVE, ACTIVE, COMPLETED }
     public enum Gender { MALE, FEMALE };
 
     public UUID getId() {
@@ -61,6 +68,14 @@ public class Student {
 
     public void setLastName(String lastName) {
         this.lastName = lastName;
+    }
+
+    public String getStudentCode() {
+        return studentCode;
+    }
+
+    public void setStudentCode(String studentCode) {
+        this.studentCode = studentCode;
     }
 
     public Status getStatus() {
@@ -113,6 +128,15 @@ public class Student {
 
     public List<ClassAttendance> getClassAttendances() {
         return classAttendances;
+    }
+
+    @Nonnull
+    public Color getColor() {
+        return color;
+    }
+
+    public void setColor(@Nonnull Color color) {
+        this.color = color;
     }
 
     public void setClassAttendances(List<ClassAttendance> classAttendances) {

@@ -1,79 +1,109 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" th:replace="~{common/layout :: layout(~{::body}, ~{::link}, ~{::scripts})}">
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{common/layout :: layout(~{::main}, ~{::link}, ~{::scripts})}">
 <head>
   <title>Student List | Grading System</title>
-  <link rel="stylesheet" th:href="@{/css/students.css}">
-  <th:block th:replace="~{common/layout :: header-css}"></th:block>
+  <th:block th:fragment="link">
+    <link rel="stylesheet" th:href="@{/css/students.css}">
+  </th:block>
 </head>
 <body class="bg-light">
-<div>
-  <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
-    <i class="bi bi-check-circle-fill me-2"></i>
-    <span th:text="${success}">Success message here</span>
-    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-  </div>
-</div>
-
-<div class="container mt-5">
-  <div class="d-flex justify-content-between align-items-center mb-4">
+<th:block th:fragment="main" class="container">
+  <!-- Header -->
+  <header class="page-header">
     <div>
-      <h2 class="fw-bold text-dark mb-1">Students Roster</h2>
-      <p class="text-muted" th:text="${students.size() + ' students currently enrolled'}">0 students</p>
+      <h1>Students</h1>
+      <p>Manage enrolled students, track academic status, and view profiles.</p>
     </div>
-    <a href="/students/create" class="btn btn-primary px-4 rounded-pill fw-bold">+ Add Student</a>
+    <button class="btn btn-primary">+ Add Student</button>
+  </header>
+
+  <!-- Toolbar: Search & Filters -->
+  <div class="toolbar">
+    <div class="search-box">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+      <input type="text" placeholder="Search by name, ID, or email...">
+    </div>
+
+    <div class="filters">
+      <select>
+        <option value="">All Grade Levels</option>
+        <option>Grade 9</option>
+        <option>Grade 10</option>
+        <option>Grade 11</option>
+        <option>Grade 12</option>
+      </select>
+      <select>
+        <option value="">All Statuses</option>
+        <option th:each="status : ${T(com.nexusgrade.app.model.Student.Status).values()}"
+                th:value="${status}"
+                th:text="${status}"></option>
+      </select>
+    </div>
   </div>
 
-  <div class="row mb-4">
-    <div class="col-md-6">
-      <input type="text" id="studentSearch" class="form-control border-primary search-bar shadow"
-             placeholder="Search by name or surname..." onkeyup="filterStudents()">
-    </div>
-  </div>
+  <!-- Data Table -->
+  <div class="table-card">
+    <table>
+      <thead>
+      <tr>
+        <th>Student</th>
+        <th>Student Code</th>
+        <th>Grade / Section</th>
+        <th>Status</th>
+        <th>Actions</th>
+      </tr>
+      </thead>
+      <tbody>
+      <tr th:each="student : ${students}">
+        <td class="user-cell">
+          <div class="avatar"
+               th:classappend="${student.color != null ? '' : 'bg-purple'}"
+               th:style="|background-color: ${student.color != null? student.getColor().hexValue : ''};|"
+               th:text="${#strings.substring(student.firstName, 0, 1) + #strings.substring(student.lastName, 0, 1)}">JD</div>
+          <div>
+            <div class="name" th:text="${student.firstName + ' ' + student.lastName}">Jane Doe</div>
+          </div>
+        </td>
+        <td class="mono" th:text="${student.studentCode}">STU-2026-089</td>
+        <td th:text="|${student.schoolClass != null ? 'Grade '+student.schoolClass.grade+' • Class'+student.schoolClass.title : 'N/A'}|">Grade 10 • Sec A</td>
+        <td>
+          <span class="badge"
+                th:classappend="${student.status == student.status.ACTIVE ? 'badge-active'
+                : (student.status.name() == student.status.INACTIVE ? 'badge-inactive'
+                : (student.status.name() == student.status.COMPLETED ? 'badge-completed'
+                : 'badge-pending'))}"
+                th:text="${student.status}">Active</span>
+        </td>
+        <td><button class="btn-icon">&#8226;&#8226;&#8226;</button></td>
+      </tr>
+      <tr th:if="${#lists.isEmpty(students)}">
+        <td colspan="6" style="text-align: center;">No students found.</td>
+      </tr>
+      </tbody>
+    </table>
 
-  <div class="table-container shadow-sm">
-    <div class="table-responsive">
-      <table id="studentDataTable" class="table align-middle border-0" style="width:100%">
-        <thead class="text-muted small text-uppercase">
-        <tr>
-          <th class="border-0 px-3">Student Name</th>
-          <th class="border-0">Grade</th>
-          <th class="border-0">Status</th>
-          <th class="border-0">Gender</th>
-          <th class="border-0">Birthday</th>
-          <th class="border-0 text-end px-3">Actions</th>
-        </tr>
-        </thead>
-        <tbody id="studentTableBody">
-        <tr th:each="student : ${students}" class="student-row">
-          <td class="px-3">
-            <div class="fw-bold text-dark" th:text="${student.firstName + ' ' + student.lastName}">Name</div>
-            <div class="small text-muted" th:text="${student.gender == 'MALE' ? 'Male' : 'Female'}">Gender</div>
-            <div class="small text-muted" th:text="${(student.getStatus())}">Status</div>
-          </td>
-          <td>
-            <span class="badge bg-primary-subtle text-primary badge-grade rounded-pill px-3" th:text="'Grade ' + ${student.schoolClass.grade}">Grade 10</span>
-          </td>
-          <td th:text="${student.gender}">Gender</td>
-          <td class="text-muted" th:text="${student.birthDay}">2008-01-01</td>
-          <td class="text-end px-3">
-            <a th:href="@{/students/student/{id}(id=${student.id})}" class="btn btn-outline-primary btn-sm btn-action" title="View Student">
-              <i class="bi fs-3 bi-person-vcard"></i>
-            </a>
-            <a th:href="@{/students/edit/{id}(id=${student.id})}" class="btn btn-outline-warning btn-sm btn-action" title="Edit Student">
-              <i class="bi fs-3 bi-pencil-fill"></i>
-            </a>
-          </td>
-        </tr>
-        <tr th:if="${#lists.isEmpty(students)}">
-          <td colspan="5" class="text-center py-5 text-muted">
-            No students found. Start by adding one!
-          </td>
-        </tr>
-        </tbody>
-      </table>
+    <!-- Pagination -->
+    <div class="pagination">
+      <span>Showing <span th:text="${students.size()}">0</span> of <span th:text="${totalItems}">0</span> students</span>
+      <div class="pagination-buttons">
+        <a th:href="@{/students(page=${currentPage - 1})}"
+           class="btn-page"
+           th:classappend="${currentPage == 0} ? 'disabled'">Previous</a>
+
+        <th:block th:if="${totalPages > 0}" th:each="i : ${#numbers.sequence(0, totalPages - 1)}">
+          <a th:href="@{/students(page=${i})}"
+             class="btn-page"
+             th:classappend="${i == currentPage} ? 'active'"
+             th:text="${i + 1}">1</a>
+        </th:block>
+
+        <a th:href="@{/students(page=${currentPage + 1})}"
+           class="btn-page"
+           th:classappend="${currentPage + 1 >= totalPages} ? 'disabled'">Next</a>
+      </div>
     </div>
   </div>
-</div>
+</th:block>
 
 <th:block th:fragment="scripts">
   <script th:inline="javascript" th:src="@{/scripts/students-list.js}"></script>

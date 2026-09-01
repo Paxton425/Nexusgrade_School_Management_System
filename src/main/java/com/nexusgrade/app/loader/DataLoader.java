@@ -174,11 +174,67 @@ public class DataLoader implements CommandLineRunner {
         logger.error("================== TITLE INJECTION COMPLETE ======================");
     }
 
+    private void setPeriodInstructors(){
+        logger.error("================== SETTING PERIOD INSTRUCTORS ======================");
+        try {
+            List<Instructor> instructors = instructorRepository.findAll();
+            List<TimeTablePeriod> periods = periodsRepository.findAll();
+            periods.forEach(p -> p.setInstructor(instructors.get(randomInt(instructors.size()))));
+            periodsRepository.saveAll(periods);
+        } catch (Exception e) {
+            logger.error("================== FAILED ======================");
+        }
+        logger.error("================== SETTING PERIOD INSTRUCTORS COMPLETE ======================");
+    }
+
+    private void setColors(){
+        logger.error("================== STARTING STUDENT COLOR SETTING ======================");
+        try{
+            List<Student> students = studentRepo.findAll();
+            Color[] colors = Color.values();
+            for(Student student : students){
+                student.setColor(colors[randomInt(colors.length)]);
+            }
+            studentRepo.saveAll(students);
+        } catch (Exception e) {
+            logger.error("================== COLOR SETTING FAILED ======================");
+            e.printStackTrace();
+        }
+        logger.error("================== COLOR SETTING COMPLETE!! ======================");
+    }
+
+    private void setStudenyIDS(){
+        logger.error("================== STARTING STUDENT ID SETTINGS ======================");
+        try{
+            List<Student> students = studentRepo.findAll();
+            LocalDate today = LocalDate.now();
+            for (int i = 0; i < students.size(); i++) {
+                // "%tY" extracts the 4-digit year from 'today'
+                // "%04d" formats the integer 'i'
+                String code = String.format("STU-%tY-%04d", today, (i+1));
+
+                students.get(i).setStudentCode(code);
+            }
+            studentRepo.saveAll(students);
+        } catch (Exception e) {
+            logger.error("================== STUDENT IDS SETTING FAILED ======================");
+            e.printStackTrace();
+        }
+        logger.error("================== STUDENT IDS SETTING COMPLETE!! ======================");
+    }
+
+    private int randomInt(int bound){
+        return new Random().nextInt(bound);
+    }
+
     @Override
     public void run(String... args) throws Exception {
         //insertSampleData();
         //setActivityPerformers();
         //seedTimetable();
         //injectUserTitles();
+        //setPeriodInstructors();
+        //setColors();
+        //setStudenyIDS();
     }
 }

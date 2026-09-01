@@ -56,10 +56,20 @@ public class StudentController implements CommandLineRunner {
         this.reportRepository = reportRepository;
     }
 
-    @GetMapping
-    public String listStudents(Model model) {
-        List<Student> students = studentRepository.findAll();
-        model.addAttribute("students", students);
+    @GetMapping("")
+    public String listStudents(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            Model model) {
+
+        Pageable pageable = PageRequest.of(page, size);
+        Page<Student> studentPage = studentRepository.findAll(pageable);
+
+        model.addAttribute("students", studentPage.getContent());
+        model.addAttribute("currentPage", page);
+        model.addAttribute("totalPages", studentPage.getTotalPages());
+        model.addAttribute("totalItems", studentPage.getTotalElements());
+
         return "students/students-list";
     }
 
