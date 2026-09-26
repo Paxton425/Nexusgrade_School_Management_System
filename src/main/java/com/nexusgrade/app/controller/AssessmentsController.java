@@ -176,7 +176,7 @@ public class AssessmentsController {
     }
 
     @GetMapping("/edit/{id}")
-    public String createAssessment(@PathVariable Long id, Model model){
+    public String editAssessment(@PathVariable Long id, Model model){
         Assessment assessment = assessmentRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Assessment with ID " + id + " not found"));
         List<Subject> subjects = subjectRepository.findAll();
@@ -200,15 +200,21 @@ public class AssessmentsController {
     @PostMapping("/save")
     public String saveAssessment(@ModelAttribute("assessment") Assessment assessment,
                                  RedirectAttributes redirectAttributes) {
+
+        Assessment savedAssessment = assessment;
         try {
-            assessmentRepository.save(assessment);
+            savedAssessment = assessmentRepository.save(assessment);
             redirectAttributes.addFlashAttribute("message", "Assessment '" + assessment.getTitle() + "' saved successfully!");
             redirectAttributes.addFlashAttribute("alertClass", "alert-success");
+
+            return "redirect:/assessments/assessment/"+savedAssessment.getId();
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("message", "Error saving assessment: " + e.getMessage());
             redirectAttributes.addFlashAttribute("alertClass", "alert-danger");
+
+            if(savedAssessment.getId() == null) return "redirect:/assessments/create";
+            else return "redirect:/assessments/edit/"+savedAssessment.getId();
         }
-        return "redirect:/assessment-list";
     }
 
     @LogActivity(action = "deleted an assessment template", entityType = "ASSESSMENT")
